@@ -1828,14 +1828,14 @@ void FormattingParserTarget::Shape(const std::string &name, ParsedParameterVecto
     if (toPly && name == "trianglemesh") {
         std::vector<int> vi = dict.GetIntArray("indices");
 
-        if (vi.size() < 500) {
+        if (vi.size() < 12) {
             // It's a small mesh; don't bother with a PLY file after all.
             Printf("%sShape \"%s\"\n", indent(), name);
             std::cout << dict.ToParameterList(catIndentCount);
         } else {
             static int count = 1;
             const char *plyPrefix = getenv("PLY_PREFIX") ? getenv("PLY_PREFIX") : "mesh";
-            std::string fn = StringPrintf("%s_%05d.ply", plyPrefix, count++);
+            std::string fn = StringPrintf("mesh/%s_%05d.ply", plyPrefix, count++);
 
             class Transform identity;
             const TriangleMesh *mesh =
