@@ -14,6 +14,8 @@
 
 #include <rply/rply.h>
 
+#include <filesystem>
+
 namespace pbrt {
 
 STAT_RATIO("Geometry/Triangles per mesh", nTris, nTriMeshes);
@@ -112,6 +114,19 @@ bool WritePLY(std::string filename, pstd::span<const int> triIndices,
               pstd::span<const int> quadIndices, pstd::span<const Point3f> p,
               pstd::span<const Normal3f> n, pstd::span<const Point2f> uv,
               pstd::span<const int> faceIndices) {
+
+    std::filesystem::path filepath = filename;
+    if (filepath.has_parent_path()) {
+        auto parentPath = filepath.parent_path();
+        if (!std::filesystem::exists(parentPath)) {
+            std::error_code ec;
+            if (!std::filesystem::create_directories(parentPath, ec)) {
+                Error(R"(%s: Can not create path for ply file.)", parentPath.string());
+                return false;
+            }
+        }
+    }
+
     p_ply plyFile =
         ply_create(filename.c_str(), PLY_DEFAULT, PlyErrorCallback, 0, nullptr);
     if (!plyFile)
