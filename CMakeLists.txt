@@ -856,6 +856,7 @@ target_include_directories (pbrt_lib PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}
   ${GLFW_INCLUDE}
   ${GLAD_INCLUDE}
+  ${SH_INCLUDE}
 )
 
 if (PBRT_CUDA_ENABLED AND PBRT_OPTIX7_PATH)
@@ -885,7 +886,8 @@ set (ALL_PBRT_LIBS
   utf8proc
   glfw
   glad
-  OpenGL::GL)
+  OpenGL::GL
+  spherical-harmonics)
 
 if (PBRT_CUDA_ENABLED)
   set_property (TARGET pbrt_lib PROPERTY CUDA_SEPARABLE_COMPILATION ON)

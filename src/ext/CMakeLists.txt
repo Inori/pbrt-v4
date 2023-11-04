@@ -171,3 +171,17 @@ add_subdirectory (glad)
 set_property (TARGET glfw PROPERTY FOLDER "ext")
 set_property (TARGET glad PROPERTY FOLDER "ext")
 
+###########################################################################
+# spherical-harmonics
+
+set (SH_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/spherical-harmonics PARENT_SCOPE)
+
+set (SH_SOURCE
+  ${CMAKE_CURRENT_SOURCE_DIR}/spherical-harmonics/default_image.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/spherical-harmonics/spherical_harmonics.cc
+  )
+
+add_library (spherical-harmonics STATIC ${SH_SOURCE})
+
+set_property (TARGET spherical-harmonics PROPERTY FOLDER "ext")
+
