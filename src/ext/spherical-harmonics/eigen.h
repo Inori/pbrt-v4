@@ -8,7 +8,7 @@
 
 namespace Eigen
 {
-    struct Vector2d
+    class Vector2d
     {
     public:
         Vector2d(double x, double y)
@@ -30,7 +30,7 @@ namespace Eigen
         std::array<double, 2> elements = {};
     };
 
-    struct Vector3d
+    class Vector3d
     {
     public:
         Vector3d(double x, double y, double z)
@@ -53,7 +53,7 @@ namespace Eigen
         std::array<double, 3> elements = {};
     };
 
-    struct Array3f
+    class Array3f
     {
         friend inline Array3f operator+(const Array3f&, const Array3f&);
         friend inline Array3f operator*(const double&, const Array3f&);
