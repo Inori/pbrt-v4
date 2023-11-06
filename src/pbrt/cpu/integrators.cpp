@@ -39,6 +39,7 @@
 #include <pbrt/util/spectrum.h>
 #include <pbrt/util/stats.h>
 #include <pbrt/util/string.h>
+#include <pbrt/cpu/precompute.h>
 
 #include <algorithm>
 
@@ -3665,6 +3666,9 @@ std::unique_ptr<Integrator> Integrator::Create(
     else if (name == "sppm")
         integrator = SPPMIntegrator::Create(parameters, colorSpace, camera, sampler,
                                             aggregate, lights, loc);
+    else if (name == "prtprobe")
+        integrator =
+            PrtProbeIntegrator::Create(parameters, sampler, aggregate, lights, loc);
     else
         ErrorExit(loc, "%s: integrator type unknown.", name);
 

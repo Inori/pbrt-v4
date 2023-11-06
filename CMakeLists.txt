@@ -568,6 +568,7 @@ SET (PBRT_CPU_SOURCE
   src/pbrt/cpu/integrators.cpp
   src/pbrt/cpu/primitive.cpp
   src/pbrt/cpu/render.cpp
+  src/pbrt/cpu/precompute.cpp
 )
 
 SET (PBRT_CPU_SOURCE_HEADERS
@@ -575,6 +576,7 @@ SET (PBRT_CPU_SOURCE_HEADERS
   src/pbrt/cpu/integrators.h
   src/pbrt/cpu/primitive.h
   src/pbrt/cpu/render.h
+  src/pbrt/cpu/precompute.h
 )
 
 SET (PBRT_WAVEFRONT_SOURCE
