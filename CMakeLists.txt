@@ -539,6 +539,21 @@ if (MSVC)
     set (PBRT_SOURCE ${PBRT_SOURCE} src/pbrt/visualstudio.natvis)
 endif ()
 
+SET (PBRT_BASE_SOURCE_HEADERS
+  src/pbrt/base/bssrdf.h
+  src/pbrt/base/bxdf.h
+  src/pbrt/base/camera.h
+  src/pbrt/base/film.h
+  src/pbrt/base/filter.h
+  src/pbrt/base/light.h
+  src/pbrt/base/lightsampler.h
+  src/pbrt/base/material.h
+  src/pbrt/base/medium.h
+  src/pbrt/base/sampler.h
+  src/pbrt/base/shape.h
+  src/pbrt/base/texture.h
+  )
+
 set (PBRT_SOURCE_HEADERS
   src/pbrt/bsdf.h
   src/pbrt/bssrdf.h
@@ -766,6 +781,7 @@ endif ()
 
 source_group ("Source Files" FILES ${PBRT_SOURCE})
 source_group ("Header Files" FILES ${PBRT_SOURCE_HEADERS})
+source_group ("Header Files/base" FILES ${PBRT_BASE_SOURCE_HEADERS})
 source_group ("Source Files/cpu" FILES ${PBRT_CPU_SOURCE})
 source_group ("Header Files/cpu" FILES ${PBRT_CPU_SOURCE_HEADERS})
 source_group ("Source Files/util" FILES ${PBRT_UTIL_SOURCE})
@@ -819,6 +835,7 @@ add_library (pbrt_lib STATIC
   ${PBRT_SOA_GENERATED}
   ${PBRT_SOURCE}
   ${PBRT_SOURCE_HEADERS}
+  ${PBRT_BASE_SOURCE_HEADERS}
   ${PBRT_CPU_SOURCE}
   ${PBRT_CPU_SOURCE_HEADERS}
   ${PBRT_UTIL_SOURCE}

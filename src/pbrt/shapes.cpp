@@ -33,6 +33,8 @@
 
 namespace pbrt {
 
+std::atomic<unsigned int> Shape::shapeId = {};
+
 // Sphere Method Definitions
 Bounds3f Sphere::Bounds() const {
     return (*renderFromObject)(

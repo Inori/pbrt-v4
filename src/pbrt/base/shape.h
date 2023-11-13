@@ -13,6 +13,7 @@
 
 #include <map>
 #include <string>
+#include <atomic>
 
 namespace pbrt {
 
@@ -43,6 +44,8 @@ class Shape
         Allocator alloc);
     std::string ToString() const;
 
+    PBRT_CPU_GPU inline unsigned int Id() const;
+
     PBRT_CPU_GPU inline Bounds3f Bounds() const;
 
     PBRT_CPU_GPU inline DirectionCone NormalBounds() const;
@@ -62,6 +65,8 @@ class Shape
                                                            Point2f u) const;
 
     PBRT_CPU_GPU inline Float PDF(const ShapeSampleContext &ctx, Vector3f wi) const;
+
+    static std::atomic<unsigned int> shapeId;
 };
 
 }  // namespace pbrt
