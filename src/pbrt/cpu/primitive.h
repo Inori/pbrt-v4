@@ -42,6 +42,7 @@ class Primitive
     pstd::optional<ShapeIntersection> Intersect(const Ray &r,
                                                 Float tMax = Infinity) const;
     bool IntersectP(const Ray &r, Float tMax = Infinity) const;
+    int IntersectN(const Ray &r, Float tMax = Infinity) const;
 };
 
 // GeometricPrimitive Definition
@@ -54,6 +55,7 @@ class GeometricPrimitive {
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
+    int IntersectN(const Ray &r, Float tMax) const;
 
   private:
     // GeometricPrimitive Private Members
@@ -71,6 +73,7 @@ class SimplePrimitive {
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
+    int IntersectN(const Ray &r, Float tMax) const;
     SimplePrimitive(Shape shape, Material material);
 
   private:
@@ -90,6 +93,7 @@ class TransformedPrimitive {
 
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
+    int IntersectN(const Ray &r, Float tMax) const;
 
     Bounds3f Bounds() const { return (*renderFromPrimitive)(primitive.Bounds()); }
 
@@ -110,6 +114,7 @@ class AnimatedPrimitive {
     AnimatedPrimitive(Primitive primitive, const AnimatedTransform &renderFromPrimitive);
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
+    int IntersectN(const Ray &r, Float tMax) const;
 
   private:
     // AnimatedPrimitive Private Members

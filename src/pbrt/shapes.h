@@ -103,21 +103,9 @@ struct QuadricIntersection {
     Float phi;
 };
 
-class ShapeBase {
-  public:
-    ShapeBase() : id(0) {
-        id = Shape::shapeId++;
-    };
-
-    PBRT_CPU_GPU
-    unsigned int Id() const { return id; }
-
-  private:
-    unsigned int id;
-};
 
 // Sphere Definition
-class Sphere : public ShapeBase {
+class Sphere {
   public:
     // Sphere Public Methods
     static Sphere *Create(const Transform *renderFromObject,
@@ -247,6 +235,9 @@ class Sphere : public ShapeBase {
     bool IntersectP(const Ray &r, Float tMax = Infinity) const {
         return BasicIntersect(r, tMax).has_value();
     }
+
+    PBRT_CPU_GPU
+    int IntersectN(const Ray &ray, Float tMax = Infinity) const { return 0; }
 
     PBRT_CPU_GPU
     SurfaceInteraction InteractionFromIntersection(const QuadricIntersection &isect,
@@ -416,7 +407,7 @@ class Sphere : public ShapeBase {
 };
 
 // Disk Definition
-class Disk : public ShapeBase {
+class Disk {
   public:
     // Disk Public Methods
     Disk(const Transform *renderFromObject, const Transform *objectFromRender,
@@ -521,6 +512,9 @@ class Disk : public ShapeBase {
     }
 
     PBRT_CPU_GPU
+    int IntersectN(const Ray &ray, Float tMax = Infinity) const { return 0; }
+
+    PBRT_CPU_GPU
     pstd::optional<ShapeSample> Sample(Point2f u) const {
         Point2f pd = SampleUniformDiskConcentric(u);
         Point3f pObj(pd.x * radius, pd.y * radius, height);
@@ -586,7 +580,7 @@ class Disk : public ShapeBase {
 };
 
 // Cylinder Definition
-class Cylinder : public ShapeBase {
+class Cylinder {
   public:
     // Cylinder Public Methods
     Cylinder(const Transform *renderFromObj, const Transform *objFromRender,
@@ -706,6 +700,9 @@ class Cylinder : public ShapeBase {
     bool IntersectP(const Ray &r, Float tMax = Infinity) const {
         return BasicIntersect(r, tMax).has_value();
     }
+
+    PBRT_CPU_GPU
+    int IntersectN(const Ray &ray, Float tMax = Infinity) const { return 0; }
 
     PBRT_CPU_GPU
     SurfaceInteraction InteractionFromIntersection(const QuadricIntersection &isect,
@@ -845,7 +842,7 @@ pstd::optional<TriangleIntersection> IntersectTriangle(const Ray &ray, Float tMa
                                                        Point3f p2);
 
 // Triangle Definition
-class Triangle : public ShapeBase {
+class Triangle {
   public:
     // Triangle Public Methods
     static pstd::vector<Shape> CreateTriangles(const TriangleMesh *mesh, Allocator alloc);
@@ -863,6 +860,9 @@ class Triangle : public ShapeBase {
                                                 Float tMax = Infinity) const;
     PBRT_CPU_GPU
     bool IntersectP(const Ray &ray, Float tMax = Infinity) const;
+
+    PBRT_CPU_GPU
+    int IntersectN(const Ray &ray, Float tMax = Infinity) const { return 0; }
 
     PBRT_CPU_GPU
     Float Area() const {
@@ -1231,7 +1231,7 @@ struct CurveCommon {
 };
 
 // Curve Definition
-class Curve : public ShapeBase {
+class Curve {
   public:
     // Curve Public Methods
     static pstd::vector<Shape> Create(const Transform *renderFromObject,
@@ -1243,7 +1243,12 @@ class Curve : public ShapeBase {
     PBRT_CPU_GPU
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &ray, Float tMax) const;
+
     bool IntersectP(const Ray &ray, Float tMax) const;
+
+    PBRT_CPU_GPU
+    int IntersectN(const Ray &ray, Float tMax = Infinity) const { return 0; }
+
     PBRT_CPU_GPU
     Float Area() const;
 
@@ -1362,7 +1367,7 @@ PBRT_CPU_GPU inline pstd::optional<BilinearIntersection> IntersectBilinearPatch(
 }
 
 // BilinearPatch Definition
-class BilinearPatch : public ShapeBase {
+class BilinearPatch {
   public:
     // BilinearPatch Public Methods
     BilinearPatch(const BilinearPatchMesh *mesh, int meshIndex, int blpIndex);
@@ -1386,6 +1391,9 @@ class BilinearPatch : public ShapeBase {
 
     PBRT_CPU_GPU
     bool IntersectP(const Ray &ray, Float tMax = Infinity) const;
+
+    PBRT_CPU_GPU
+    int IntersectN(const Ray &ray, Float tMax = Infinity) const { return 0; }
 
     PBRT_CPU_GPU
     pstd::optional<ShapeSample> Sample(const ShapeSampleContext &ctx, Point2f u) const;
@@ -1553,10 +1561,6 @@ class BilinearPatch : public ShapeBase {
     static constexpr Float MinSphericalSampleArea = 1e-4;
 };
 
-inline unsigned int Shape::Id() const {
-    auto id = [&](auto ptr) { return ptr->Id(); };
-    return Dispatch(id);
-}
 
 inline Bounds3f Shape::Bounds() const {
     auto bounds = [&](auto ptr) { return ptr->Bounds(); };
@@ -1571,6 +1575,11 @@ inline pstd::optional<ShapeIntersection> Shape::Intersect(const Ray &ray,
 
 inline bool Shape::IntersectP(const Ray &ray, Float tMax) const {
     auto intr = [&](auto ptr) { return ptr->IntersectP(ray, tMax); };
+    return Dispatch(intr);
+}
+
+inline int Shape::IntersectN(const Ray &ray, Float tMax) const {
+    auto intr = [&](auto ptr) { return ptr->IntersectN(ray, tMax); };
     return Dispatch(intr);
 }
 

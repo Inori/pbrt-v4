@@ -13,6 +13,7 @@
 #include <pbrt/util/parallel.h>
 #include <pbrt/util/pstd.h>
 #include <pbrt/util/vecmath.h>
+#include <pbrt/cpu/primitive.h>
 
 #include <array>
 #include <string>
@@ -29,6 +30,8 @@ class TriangleMesh {
                  std::vector<Vector3f> S, std::vector<Normal3f> N,
                  std::vector<Point2f> uv, std::vector<int> faceIndices, Allocator alloc);
 
+    void BuildAggregate(const pstd::vector<Shape> &shapes);
+
     std::string ToString() const;
 
     bool WritePLY(std::string filename) const;
@@ -44,6 +47,7 @@ class TriangleMesh {
     const Point2f *uv = nullptr;
     const int *faceIndices = nullptr;
     bool reverseOrientation, transformSwapsHandedness;
+    Primitive aggregate;
 };
 
 // BilinearPatchMesh Definition
