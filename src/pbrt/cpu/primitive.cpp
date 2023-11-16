@@ -31,11 +31,6 @@ bool Primitive::IntersectP(const Ray &r, Float tMax) const {
     return DispatchCPU(isectp);
 }
 
-int Primitive::IntersectN(const Ray &r, Float tMax /*= Infinity*/) const {
-    auto isectn = [&](auto ptr) { return ptr->IntersectN(r, tMax); };
-    return DispatchCPU(isectn);
-}
-
 // GeometricPrimitive Method Definitions
 GeometricPrimitive::GeometricPrimitive(Shape shape, Material material, Light areaLight,
                                        const MediumInterface &mediumInterface,
@@ -88,11 +83,6 @@ bool GeometricPrimitive::IntersectP(const Ray &r, Float tMax) const {
         return shape.IntersectP(r, tMax);
 }
 
-int GeometricPrimitive::IntersectN(const Ray &r, Float tMax) const {
-    LOG_FATAL("IntersectN unimplemented");
-    return 0;
-}
-
 // SimplePrimitive Method Definitions
 SimplePrimitive::SimplePrimitive(Shape shape, Material material)
     : shape(shape), material(material) {
@@ -105,10 +95,6 @@ Bounds3f SimplePrimitive::Bounds() const {
 
 bool SimplePrimitive::IntersectP(const Ray &r, Float tMax) const {
     return shape.IntersectP(r, tMax);
-}
-
-int SimplePrimitive::IntersectN(const Ray &r, Float tMax) const {
-    return shape.IntersectN(r, tMax);
 }
 
 pstd::optional<ShapeIntersection> SimplePrimitive::Intersect(const Ray &r,
@@ -135,18 +121,12 @@ pstd::optional<ShapeIntersection> TransformedPrimitive::Intersect(const Ray &r,
     // Return transformed instance's intersection information
     si->intr = (*renderFromPrimitive)(si->intr);
     CHECK_GE(Dot(si->intr.n, si->intr.shading.n), 0);
-
     return si;
 }
 
 bool TransformedPrimitive::IntersectP(const Ray &r, Float tMax) const {
     Ray ray = renderFromPrimitive->ApplyInverse(r, &tMax);
     return primitive.IntersectP(ray, tMax);
-}
-
-int TransformedPrimitive::IntersectN(const Ray &r, Float tMax) const {
-    LOG_FATAL("IntersectN unimplemented");
-    return 0;
 }
 
 // AnimatedPrimitive Method Definitions
@@ -175,11 +155,6 @@ pstd::optional<ShapeIntersection> AnimatedPrimitive::Intersect(const Ray &r,
 bool AnimatedPrimitive::IntersectP(const Ray &r, Float tMax) const {
     Ray ray = renderFromPrimitive.ApplyInverse(r, &tMax);
     return primitive.IntersectP(ray, tMax);
-}
-
-int AnimatedPrimitive::IntersectN(const Ray &r, Float tMax) const {
-    LOG_FATAL("IntersectN unimplemented");
-    return 0;
 }
 
 }  // namespace pbrt

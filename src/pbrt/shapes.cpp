@@ -33,6 +33,8 @@
 
 namespace pbrt {
 
+std::atomic<unsigned int> Shape::shapeId = {};
+
 // Sphere Method Definitions
 Bounds3f Sphere::Bounds() const {
     return (*renderFromObject)(
@@ -1415,7 +1417,6 @@ pstd::vector<Shape> Shape::Create(
         TriangleMesh *mesh = Triangle::CreateMesh(renderFromObject, reverseOrientation,
                                                   parameters, loc, alloc);
         shapes = Triangle::CreateTriangles(mesh, alloc);
-        mesh->BuildAggregate(shapes);
     } else if (name == "plymesh") {
         std::string filename = ResolveFilename(parameters.GetOneString("filename", ""));
         TriQuadMesh plyMesh = TriQuadMesh::ReadPLY(filename);
@@ -1464,7 +1465,6 @@ pstd::vector<Shape> Shape::Create(
                 std::vector<Vector3f>(), plyMesh.n, plyMesh.uv, plyMesh.faceIndices,
                 alloc);
             shapes = Triangle::CreateTriangles(mesh, alloc);
-            mesh->BuildAggregate(shapes);
         }
 
         if (!plyMesh.quadIndices.empty()) {
@@ -1493,7 +1493,6 @@ pstd::vector<Shape> Shape::Create(
                                            vertexIndices, P, alloc);
 
         shapes = Triangle::CreateTriangles(mesh, alloc);
-        mesh->BuildAggregate(shapes);
     } else
         ErrorExit(loc, "%s: shape type unknown.", name);
 

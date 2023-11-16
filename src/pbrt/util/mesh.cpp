@@ -11,7 +11,6 @@
 #include <pbrt/util/print.h>
 #include <pbrt/util/stats.h>
 #include <pbrt/util/transform.h>
-#include <pbrt/cpu/aggregates.h>
 
 #include <rply/rply.h>
 
@@ -28,7 +27,7 @@ TriangleMesh::TriangleMesh(const Transform &renderFromObject, bool reverseOrient
                            std::vector<Vector3f> s, std::vector<Normal3f> n,
                            std::vector<Point2f> uv, std::vector<int> faceIndices,
                            Allocator alloc)
-    : nTriangles(indices.size() / 3), nVertices(p.size()), aggregate(nullptr) {
+    : nTriangles(indices.size() / 3), nVertices(p.size()) {
     CHECK_EQ((indices.size() % 3), 0);
     ++nTriMeshes;
     nTris += nTriangles;
@@ -77,18 +76,6 @@ TriangleMesh::TriangleMesh(const Transform &renderFromObject, bool reverseOrient
     // to promote to a 64-bit int before multiplying by 3 when we look up
     // in the indices array...
     CHECK_LE(indices.size(), std::numeric_limits<int>::max());
-}
-
-void TriangleMesh::BuildAggregate(const pstd::vector<Shape> &shapes) {
-    if (shapes.empty())
-        return;
-
-    std::vector<Primitive> primitives;
-    for (auto& shape : shapes) {
-        primitives.push_back(new SimplePrimitive(shape, nullptr));
-    }
-
-    this->aggregate = new BVHAggregate(std::move(primitives));
 }
 
 std::string TriangleMesh::ToString() const {

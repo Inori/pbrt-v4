@@ -622,10 +622,6 @@ bool BVHAggregate::IntersectP(const Ray &ray, Float tMax) const {
     return false;
 }
 
-int BVHAggregate::IntersectN(const Ray &ray, Float tMax) const {
-    return 0;
-}
-
 BVHBuildNode *BVHAggregate::buildUpperSAH(Allocator alloc,
                                           std::vector<BVHBuildNode *> &treeletRoots,
                                           int start, int end,
@@ -1150,10 +1146,6 @@ bool KdTreeAggregate::IntersectP(const Ray &ray, Float raytMax) const {
     }
     kdNodesVisited += nodesVisited;
     return false;
-}
-
-int KdTreeAggregate::IntersectN(const Ray &ray, Float tMax) const {
-    return 0;
 }
 
 KdTreeAggregate *KdTreeAggregate::Create(std::vector<Primitive> prims,
