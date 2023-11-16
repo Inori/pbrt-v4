@@ -1839,7 +1839,7 @@ void FormattingParserTarget::Shape(const std::string &name, ParsedParameterVecto
 
             class Transform identity;
             const TriangleMesh *mesh =
-                Triangle::CreateMesh(&identity, false, dict, &loc, Allocator());
+                Triangle::CreateMesh(0, &identity, false, dict, &loc, Allocator());
             if (!mesh->WritePLY(fn))
                 ErrorExit(&loc, "%s: unable to write PLY file.", fn);
 

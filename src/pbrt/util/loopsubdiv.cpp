@@ -131,7 +131,8 @@ inline Float loopGamma(int valence) {
 }
 
 // LoopSubdiv Function Definitions
-TriangleMesh *LoopSubdivide(const Transform *renderFromObject, bool reverseOrientation,
+TriangleMesh *LoopSubdivide(unsigned int id, const Transform *renderFromObject,
+                            bool reverseOrientation,
                             int nLevels, pstd::span<const int> vertexIndices,
                             pstd::span<const Point3f> p, Allocator alloc) {
     std::vector<SDVertex *> vertices;
@@ -378,9 +379,10 @@ TriangleMesh *LoopSubdivide(const Transform *renderFromObject, bool reverseOrien
                 ++vp;
             }
         }
-        return alloc.new_object<TriangleMesh>(
-            *renderFromObject, reverseOrientation, verts, pLimit, std::vector<Vector3f>(),
-            Ns, std::vector<Point2f>(), std::vector<int>(), alloc);
+        return alloc.new_object<TriangleMesh>(id, *renderFromObject, reverseOrientation,
+                                              verts, pLimit, std::vector<Vector3f>(), Ns,
+                                              std::vector<Point2f>(), std::vector<int>(),
+                                              alloc);
     }
 }
 

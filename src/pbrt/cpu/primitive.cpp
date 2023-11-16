@@ -16,6 +16,11 @@
 
 namespace pbrt {
 
+unsigned int Primitive::Id() const {
+    auto id = [&](auto ptr) { return ptr->Id(); };
+    return DispatchCPU(id);
+}
+
 Bounds3f Primitive::Bounds() const {
     auto bounds = [&](auto ptr) { return ptr->Bounds(); };
     return DispatchCPU(bounds);
@@ -41,6 +46,10 @@ GeometricPrimitive::GeometricPrimitive(Shape shape, Material material, Light are
       mediumInterface(mediumInterface),
       alpha(alpha) {
     primitiveMemory += sizeof(*this);
+}
+
+unsigned int GeometricPrimitive::Id() const {
+    return shape.Id();
 }
 
 Bounds3f GeometricPrimitive::Bounds() const {
@@ -89,6 +98,10 @@ SimplePrimitive::SimplePrimitive(Shape shape, Material material)
     primitiveMemory += sizeof(*this);
 }
 
+unsigned int SimplePrimitive::Id() const {
+    return shape.Id();
+}
+
 Bounds3f SimplePrimitive::Bounds() const {
     return shape.Bounds();
 }
@@ -106,6 +119,11 @@ pstd::optional<ShapeIntersection> SimplePrimitive::Intersect(const Ray &r,
     si->intr.SetIntersectionProperties(material, nullptr, nullptr, r.medium);
 
     return si;
+}
+
+unsigned int TransformedPrimitive::Id() const {
+    // Return instance id, not shape id
+    return geometryId;
 }
 
 // TransformedPrimitive Method Definitions
@@ -127,6 +145,10 @@ pstd::optional<ShapeIntersection> TransformedPrimitive::Intersect(const Ray &r,
 bool TransformedPrimitive::IntersectP(const Ray &r, Float tMax) const {
     Ray ray = renderFromPrimitive->ApplyInverse(r, &tMax);
     return primitive.IntersectP(ray, tMax);
+}
+
+unsigned int AnimatedPrimitive::Id() const {
+    return primitive.Id();
 }
 
 // AnimatedPrimitive Method Definitions

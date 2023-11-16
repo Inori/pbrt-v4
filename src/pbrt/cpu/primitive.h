@@ -37,6 +37,8 @@ class Primitive
     // Primitive Interface
     using TaggedPointer::TaggedPointer;
 
+    unsigned int Id() const;
+
     Bounds3f Bounds() const;
 
     pstd::optional<ShapeIntersection> Intersect(const Ray &r,
@@ -51,6 +53,7 @@ class GeometricPrimitive {
     GeometricPrimitive(Shape shape, Material material, Light areaLight,
                        const MediumInterface &mediumInterface,
                        FloatTexture alpha = nullptr);
+    unsigned int Id() const;
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
@@ -68,6 +71,7 @@ class GeometricPrimitive {
 class SimplePrimitive {
   public:
     // SimplePrimitive Public Methods
+    unsigned int Id() const;
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
@@ -83,10 +87,13 @@ class SimplePrimitive {
 class TransformedPrimitive {
   public:
     // TransformedPrimitive Public Methods
-    TransformedPrimitive(Primitive primitive, const Transform *renderFromPrimitive)
-        : primitive(primitive), renderFromPrimitive(renderFromPrimitive) {
+    TransformedPrimitive(unsigned int id, Primitive primitive,
+                         const Transform *renderFromPrimitive)
+        : geometryId(id), primitive(primitive), renderFromPrimitive(renderFromPrimitive) {
         primitiveMemory += sizeof(*this);
     }
+
+    unsigned int Id() const;
 
     pstd::optional<ShapeIntersection> Intersect(const Ray &r, Float tMax) const;
     bool IntersectP(const Ray &r, Float tMax) const;
@@ -97,12 +104,15 @@ class TransformedPrimitive {
     // TransformedPrimitive Private Members
     Primitive primitive;
     const Transform *renderFromPrimitive;
+    unsigned int geometryId;
 };
 
 // AnimatedPrimitive Definition
 class AnimatedPrimitive {
   public:
     // AnimatedPrimitive Public Methods
+    unsigned int Id() const;
+
     Bounds3f Bounds() const {
         return renderFromPrimitive.MotionBounds(primitive.Bounds());
     }

@@ -29,6 +29,8 @@ struct ShapeSample;
 struct ShapeIntersection;
 struct ShapeSampleContext;
 
+static constexpr unsigned int InvalidGeometryId = static_cast<unsigned int>(-1);
+
 // Shape Definition
 class Shape
     : public TaggedPointer<Sphere, Cylinder, Disk, Triangle, BilinearPatch, Curve> {
@@ -37,7 +39,7 @@ class Shape
     using TaggedPointer::TaggedPointer;
 
     static pstd::vector<Shape> Create(
-        const std::string &name, const Transform *renderFromObject,
+        unsigned int id, const std::string &name, const Transform *renderFromObject,
         const Transform *objectFromRender, bool reverseOrientation,
         const ParameterDictionary &parameters,
         const std::map<std::string, FloatTexture> &floatTextures, const FileLoc *loc,
@@ -65,8 +67,6 @@ class Shape
                                                            Point2f u) const;
 
     PBRT_CPU_GPU inline Float PDF(const ShapeSampleContext &ctx, Vector3f wi) const;
-
-    static std::atomic<unsigned int> shapeId;
 };
 
 }  // namespace pbrt

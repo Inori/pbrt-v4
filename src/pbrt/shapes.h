@@ -105,31 +105,32 @@ struct QuadricIntersection {
 
 class ShapeBase {
   public:
-    ShapeBase() : id(0) {
-        id = Shape::shapeId++;
+    ShapeBase(unsigned int id) : geometryId(id){
     };
 
     PBRT_CPU_GPU
-    unsigned int Id() const { return id; }
+    unsigned int Id() const { return geometryId; }
 
   private:
-    unsigned int id;
+    unsigned int geometryId;
 };
 
 // Sphere Definition
 class Sphere : public ShapeBase {
   public:
     // Sphere Public Methods
-    static Sphere *Create(const Transform *renderFromObject,
+    static Sphere *Create(unsigned int id, const Transform *renderFromObject,
                           const Transform *objectFromRender, bool reverseOrientation,
                           const ParameterDictionary &parameters, const FileLoc *loc,
                           Allocator alloc);
 
     std::string ToString() const;
 
-    Sphere(const Transform *renderFromObject, const Transform *objectFromRender,
+    Sphere(unsigned int id, const Transform *renderFromObject,
+           const Transform *objectFromRender,
            bool reverseOrientation, Float radius, Float zMin, Float zMax, Float phiMax)
-        : renderFromObject(renderFromObject),
+        : ShapeBase(id),
+          renderFromObject(renderFromObject),
           objectFromRender(objectFromRender),
           reverseOrientation(reverseOrientation),
           transformSwapsHandedness(renderFromObject->SwapsHandedness()),
@@ -419,10 +420,12 @@ class Sphere : public ShapeBase {
 class Disk : public ShapeBase {
   public:
     // Disk Public Methods
-    Disk(const Transform *renderFromObject, const Transform *objectFromRender,
+    Disk(unsigned int id, const Transform *renderFromObject,
+         const Transform *objectFromRender,
          bool reverseOrientation, Float height, Float radius, Float innerRadius,
          Float phiMax)
-        : renderFromObject(renderFromObject),
+        : ShapeBase(id),
+          renderFromObject(renderFromObject),
           objectFromRender(objectFromRender),
           reverseOrientation(reverseOrientation),
           transformSwapsHandedness(renderFromObject->SwapsHandedness()),
@@ -431,7 +434,7 @@ class Disk : public ShapeBase {
           innerRadius(innerRadius),
           phiMax(Radians(Clamp(phiMax, 0, 360))) {}
 
-    static Disk *Create(const Transform *renderFromObject,
+    static Disk *Create(unsigned int id, const Transform *renderFromObject,
                         const Transform *objectFromRender, bool reverseOrientation,
                         const ParameterDictionary &parameters, const FileLoc *loc,
                         Allocator alloc);
@@ -589,10 +592,11 @@ class Disk : public ShapeBase {
 class Cylinder : public ShapeBase {
   public:
     // Cylinder Public Methods
-    Cylinder(const Transform *renderFromObj, const Transform *objFromRender,
+    Cylinder(unsigned int id, const Transform *renderFromObj,
+             const Transform *objFromRender,
              bool reverseOrientation, Float radius, Float zMin, Float zMax, Float phiMax);
 
-    static Cylinder *Create(const Transform *renderFromObject,
+    static Cylinder *Create(unsigned int id, const Transform *renderFromObject,
                             const Transform *objectFromRender, bool reverseOrientation,
                             const ParameterDictionary &parameters, const FileLoc *loc,
                             Allocator alloc);
@@ -814,10 +818,11 @@ class Cylinder : public ShapeBase {
 };
 
 // Cylinder Inline Methods
-inline Cylinder::Cylinder(const Transform *renderFromObject,
+inline Cylinder::Cylinder(unsigned int id, const Transform *renderFromObject,
                           const Transform *objectFromRender, bool reverseOrientation,
                           Float radius, Float zMin, Float zMax, Float phiMax)
-    : renderFromObject(renderFromObject),
+    : ShapeBase(id),
+      renderFromObject(renderFromObject),
       objectFromRender(objectFromRender),
       reverseOrientation(reverseOrientation),
       transformSwapsHandedness(renderFromObject->SwapsHandedness()),
@@ -851,7 +856,8 @@ class Triangle : public ShapeBase {
     static pstd::vector<Shape> CreateTriangles(const TriangleMesh *mesh, Allocator alloc);
 
     Triangle() = default;
-    Triangle(int meshIndex, int triIndex) : meshIndex(meshIndex), triIndex(triIndex) {}
+    Triangle(unsigned int shapeId, int meshIndex, int triIndex)
+        : ShapeBase(shapeId), meshIndex(meshIndex), triIndex(triIndex) {}
 
     static void Init(Allocator alloc);
 
@@ -879,7 +885,7 @@ class Triangle : public ShapeBase {
 
     std::string ToString() const;
 
-    static TriangleMesh *CreateMesh(const Transform *renderFromObject,
+    static TriangleMesh *CreateMesh(unsigned int id, const Transform *renderFromObject,
                                     bool reverseOrientation,
                                     const ParameterDictionary &parameters,
                                     const FileLoc *loc, Allocator alloc);
@@ -1234,7 +1240,7 @@ struct CurveCommon {
 class Curve : public ShapeBase {
   public:
     // Curve Public Methods
-    static pstd::vector<Shape> Create(const Transform *renderFromObject,
+    static pstd::vector<Shape> Create(unsigned int id, const Transform *renderFromObject,
                                       const Transform *objectFromRender,
                                       bool reverseOrientation,
                                       const ParameterDictionary &parameters,
@@ -1259,8 +1265,8 @@ class Curve : public ShapeBase {
 
     std::string ToString() const;
 
-    Curve(const CurveCommon *common, Float uMin, Float uMax)
-        : common(common), uMin(uMin), uMax(uMax) {}
+    Curve(unsigned int id, const CurveCommon *common, Float uMin, Float uMax)
+        : ShapeBase(id), common(common), uMin(uMin), uMax(uMax) {}
 
     PBRT_CPU_GPU
     DirectionCone NormalBounds() const { return DirectionCone::EntireSphere(); }
@@ -1369,7 +1375,8 @@ class BilinearPatch : public ShapeBase {
 
     static void Init(Allocator alloc);
 
-    static BilinearPatchMesh *CreateMesh(const Transform *renderFromObject,
+    static BilinearPatchMesh *CreateMesh(unsigned int id,
+                                         const Transform *renderFromObject,
                                          bool reverseOrientation,
                                          const ParameterDictionary &parameters,
                                          const FileLoc *loc, Allocator alloc);

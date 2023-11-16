@@ -137,9 +137,10 @@ struct alignas(32) LinearBVHNode {
 };
 
 // BVHAggregate Method Definitions
-BVHAggregate::BVHAggregate(std::vector<Primitive> prims, int maxPrimsInNode,
-                           SplitMethod splitMethod)
-    : maxPrimsInNode(std::min(255, maxPrimsInNode)),
+BVHAggregate::BVHAggregate(unsigned int id, std::vector<Primitive> prims,
+                           int maxPrimsInNode, SplitMethod splitMethod)
+    : geometryId(id),
+      maxPrimsInNode(std::min(255, maxPrimsInNode)),
       primitives(std::move(prims)),
       splitMethod(splitMethod) {
     CHECK(!primitives.empty());
@@ -721,7 +722,7 @@ BVHBuildNode *BVHAggregate::buildUpperSAH(Allocator alloc,
     return node;
 }
 
-BVHAggregate *BVHAggregate::Create(std::vector<Primitive> prims,
+BVHAggregate *BVHAggregate::Create(unsigned int id, std::vector<Primitive> prims,
                                    const ParameterDictionary &parameters) {
     std::string splitMethodName = parameters.GetOneString("splitmethod", "sah");
     BVHAggregate::SplitMethod splitMethod;
@@ -739,7 +740,11 @@ BVHAggregate *BVHAggregate::Create(std::vector<Primitive> prims,
     }
 
     int maxPrimsInNode = parameters.GetOneInt("maxnodeprims", 4);
-    return new BVHAggregate(std::move(prims), maxPrimsInNode, splitMethod);
+    return new BVHAggregate(id, std::move(prims), maxPrimsInNode, splitMethod);
+}
+
+unsigned int BVHAggregate::Id() const {
+    return geometryId;
 }
 
 // KdNodeToVisit Definition
@@ -794,10 +799,11 @@ struct BoundEdge {
 STAT_PIXEL_COUNTER("Kd-Tree/Nodes visited", kdNodesVisited);
 
 // KdTreeAggregate Method Definitions
-KdTreeAggregate::KdTreeAggregate(std::vector<Primitive> p, int isectCost,
+KdTreeAggregate::KdTreeAggregate(unsigned int id, std::vector<Primitive> p, int isectCost,
                                  int traversalCost, Float emptyBonus, int maxPrims,
                                  int maxDepth)
-    : isectCost(isectCost),
+    : geometryId(id),
+      isectCost(isectCost),
       traversalCost(traversalCost),
       maxPrims(maxPrims),
       emptyBonus(emptyBonus),
@@ -1148,24 +1154,29 @@ bool KdTreeAggregate::IntersectP(const Ray &ray, Float raytMax) const {
     return false;
 }
 
-KdTreeAggregate *KdTreeAggregate::Create(std::vector<Primitive> prims,
+KdTreeAggregate *KdTreeAggregate::Create(unsigned int id, std::vector<Primitive> prims,
                                          const ParameterDictionary &parameters) {
     int isectCost = parameters.GetOneInt("intersectcost", 5);
     int travCost = parameters.GetOneInt("traversalcost", 1);
     Float emptyBonus = parameters.GetOneFloat("emptybonus", 0.5f);
     int maxPrims = parameters.GetOneInt("maxprims", 1);
     int maxDepth = parameters.GetOneInt("maxdepth", -1);
-    return new KdTreeAggregate(std::move(prims), isectCost, travCost, emptyBonus,
+    return new KdTreeAggregate(id, std::move(prims), isectCost, travCost, emptyBonus,
                                maxPrims, maxDepth);
 }
 
-Primitive CreateAccelerator(const std::string &name, std::vector<Primitive> prims,
+unsigned int KdTreeAggregate::Id() const {
+    return geometryId;
+}
+
+Primitive CreateAccelerator(unsigned int id, const std::string &name,
+                            std::vector<Primitive> prims,
                             const ParameterDictionary &parameters) {
     Primitive accel = nullptr;
     if (name == "bvh")
-        accel = BVHAggregate::Create(std::move(prims), parameters);
+        accel = BVHAggregate::Create(id, std::move(prims), parameters);
     else if (name == "kdtree")
-        accel = KdTreeAggregate::Create(std::move(prims), parameters);
+        accel = KdTreeAggregate::Create(id, std::move(prims), parameters);
     else
         ErrorExit("%s: accelerator type unknown.", name);
 
