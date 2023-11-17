@@ -23,6 +23,9 @@ class PrtProbeIntegrator : public Integrator {
     std::string ToString() const;
 
   private:
+    int IntersectN(const Ray &ray, Float tMax = Infinity);
+
+  private:
     Sampler samplerPrototype;
     int maxDepth;
 };
