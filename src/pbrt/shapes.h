@@ -93,6 +93,7 @@ PBRT_CPU_GPU inline Ray ShapeSampleContext::SpawnRay(Vector3f w) const {
 struct ShapeIntersection {
     SurfaceInteraction intr;
     Float tHit;
+    unsigned int geometryId;
     std::string ToString() const;
 };
 
@@ -111,8 +112,8 @@ class ShapeBase {
     PBRT_CPU_GPU
     unsigned int Id() const { return geometryId; }
 
-  private:
-    unsigned int geometryId;
+  protected:
+    const unsigned int geometryId;
 };
 
 // Sphere Definition
@@ -156,7 +157,7 @@ class Sphere : public ShapeBase {
         if (!isect)
             return {};
         SurfaceInteraction intr = InteractionFromIntersection(*isect, -ray.d, ray.time);
-        return ShapeIntersection{intr, isect->tHit};
+        return ShapeIntersection{intr, isect->tHit, geometryId};
     }
 
     PBRT_CPU_GPU
@@ -457,7 +458,7 @@ class Disk : public ShapeBase {
         if (!isect)
             return {};
         SurfaceInteraction intr = InteractionFromIntersection(*isect, -ray.d, ray.time);
-        return ShapeIntersection{intr, isect->tHit};
+        return ShapeIntersection{intr, isect->tHit, geometryId};
     }
 
     PBRT_CPU_GPU
@@ -619,7 +620,7 @@ class Cylinder : public ShapeBase {
         if (!isect)
             return {};
         SurfaceInteraction intr = InteractionFromIntersection(*isect, -ray.d, ray.time);
-        return ShapeIntersection{intr, isect->tHit};
+        return ShapeIntersection{intr, isect->tHit, geometryId};
     }
 
     PBRT_CPU_GPU

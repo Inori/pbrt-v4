@@ -338,7 +338,7 @@ pstd::optional<ShapeIntersection> Triangle::Intersect(const Ray &ray, Float tMax
 #ifndef PBRT_IS_GPU_CODE
     ++nTriHits;
 #endif
-    return ShapeIntersection{intr, triIsect->t};
+    return ShapeIntersection{intr, triIsect->t, geometryId};
 }
 
 bool Triangle::IntersectP(const Ray &ray, Float tMax) const {
@@ -731,7 +731,7 @@ bool Curve::RecursiveIntersect(const Ray &ray, Float tMax, pstd::span<const Poin
                                     Normal3f(), ray.time, flipNormal);
             intr = (*common->renderFromObject)(intr);
 
-            *si = ShapeIntersection{intr, tHit};
+            *si = ShapeIntersection{intr, tHit, geometryId};
         }
 #ifndef PBRT_IS_GPU_CODE
         ++nCurveHits;
@@ -1146,7 +1146,7 @@ pstd::optional<ShapeIntersection> BilinearPatch::Intersect(const Ray &ray,
         return {};
     SurfaceInteraction intr =
         InteractionFromIntersection(mesh, blpIndex, blpIsect->uv, ray.time, -ray.d);
-    return ShapeIntersection{intr, blpIsect->t};
+    return ShapeIntersection{intr, blpIsect->t, geometryId};
 }
 
 bool BilinearPatch::IntersectP(const Ray &ray, Float tMax) const {

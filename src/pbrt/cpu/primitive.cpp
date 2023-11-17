@@ -138,6 +138,8 @@ pstd::optional<ShapeIntersection> TransformedPrimitive::Intersect(const Ray &r,
 
     // Return transformed instance's intersection information
     si->intr = (*renderFromPrimitive)(si->intr);
+    si->geometryId = geometryId;
+
     CHECK_GE(Dot(si->intr.n, si->intr.shading.n), 0);
     return si;
 }

@@ -104,6 +104,9 @@ class TransformedPrimitive {
     // TransformedPrimitive Private Members
     Primitive primitive;
     const Transform *renderFromPrimitive;
+    // This is not instance id, an instance is treated
+    // as a normal object in world space,
+    // so it is geometry id, same as in shapes.
     unsigned int geometryId;
 };
 
