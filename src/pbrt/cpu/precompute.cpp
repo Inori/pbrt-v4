@@ -23,9 +23,6 @@ void PrtProbeIntegrator::Render() {
                        {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},  {0.0, -1.0, 0.0}};
     Point3f o = {0.0, 0.0, 1.0};
 
-    Ray testRay({0.0, -2.5, 1.0}, {0.0, 1.0, 0.0});
-    int hitCount = IntersectN(testRay);
-
     for (int i = 0; i != 6; ++i)
     {
         RayDifferential ray(o, dir[i]);
@@ -41,7 +38,7 @@ std::string PrtProbeIntegrator::ToString() const {
 int PrtProbeIntegrator::IntersectN(const Ray &ray, Float tMax /*= Infinity*/) {
     // Return hit count on the first hit object
     int hitCount = 0;
-    unsigned int firstGeometryId = InvalidGeometryId;
+    unsigned int firstHitGeometryId = InvalidGeometryId;
 
     Ray nextRay = ray;
     while (true) {
@@ -50,13 +47,12 @@ int PrtProbeIntegrator::IntersectN(const Ray &ray, Float tMax /*= Infinity*/) {
             break;
         }
 
-        if (firstGeometryId == InvalidGeometryId) {
-            firstGeometryId = si->geometryId;
+        if (firstHitGeometryId == InvalidGeometryId) {
+            firstHitGeometryId = si->geometryId;
             ++hitCount;
             Point3f hitPoint = ray(si->tHit);
-            LOG_VERBOSE("hitpoint %s", hitPoint);
         } else {
-            if (si->geometryId == firstGeometryId) {
+            if (si->geometryId == firstHitGeometryId) {
                 ++hitCount;
             }
         }
