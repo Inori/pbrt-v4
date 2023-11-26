@@ -16,10 +16,6 @@
 
 namespace pbrt {
 
-unsigned int Primitive::Id() const {
-    auto id = [&](auto ptr) { return ptr->Id(); };
-    return DispatchCPU(id);
-}
 
 Bounds3f Primitive::Bounds() const {
     auto bounds = [&](auto ptr) { return ptr->Bounds(); };
@@ -48,9 +44,6 @@ GeometricPrimitive::GeometricPrimitive(Shape shape, Material material, Light are
     primitiveMemory += sizeof(*this);
 }
 
-unsigned int GeometricPrimitive::Id() const {
-    return shape.Id();
-}
 
 Bounds3f GeometricPrimitive::Bounds() const {
     return shape.Bounds();
@@ -98,10 +91,6 @@ SimplePrimitive::SimplePrimitive(Shape shape, Material material)
     primitiveMemory += sizeof(*this);
 }
 
-unsigned int SimplePrimitive::Id() const {
-    return shape.Id();
-}
-
 Bounds3f SimplePrimitive::Bounds() const {
     return shape.Bounds();
 }
@@ -121,11 +110,6 @@ pstd::optional<ShapeIntersection> SimplePrimitive::Intersect(const Ray &r,
     return si;
 }
 
-unsigned int TransformedPrimitive::Id() const {
-    // Return instance id, not shape id
-    return geometryId;
-}
-
 // TransformedPrimitive Method Definitions
 pstd::optional<ShapeIntersection> TransformedPrimitive::Intersect(const Ray &r,
                                                                   Float tMax) const {
@@ -138,7 +122,6 @@ pstd::optional<ShapeIntersection> TransformedPrimitive::Intersect(const Ray &r,
 
     // Return transformed instance's intersection information
     si->intr = (*renderFromPrimitive)(si->intr);
-    si->geometryId = geometryId;
 
     CHECK_GE(Dot(si->intr.n, si->intr.shading.n), 0);
     return si;
@@ -149,9 +132,6 @@ bool TransformedPrimitive::IntersectP(const Ray &r, Float tMax) const {
     return primitive.IntersectP(ray, tMax);
 }
 
-unsigned int AnimatedPrimitive::Id() const {
-    return primitive.Id();
-}
 
 // AnimatedPrimitive Method Definitions
 AnimatedPrimitive::AnimatedPrimitive(Primitive p,

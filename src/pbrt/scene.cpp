@@ -1315,10 +1315,10 @@ std::vector<Light> BasicScene::CreateLights(
         }
 
         // shapes for lights will not be added to final acceleration aggregate
-        // so we just 
+        // so we just
         pstd::vector<pbrt::Shape> shapeObjects = Shape::Create(
-            InvalidGeometryId, sh.name, sh.renderFromObject, sh.objectFromRender,
-            sh.reverseOrientation, sh.parameters, textures.floatTextures, &sh.loc, alloc);
+            sh.name, sh.renderFromObject, sh.objectFromRender, sh.reverseOrientation,
+            sh.parameters, textures.floatTextures, &sh.loc, alloc);
 
         FloatTexture alphaTex = getAlphaTexture(sh.parameters, &sh.loc);
 
@@ -1385,8 +1385,6 @@ Primitive BasicScene::CreateAggregate(
             return nullptr;
     };
 
-    std::atomic<unsigned int> geometryIndex = {0};
-
     // Non-animated shapes
     auto CreatePrimitivesForShapes =
         [&](std::vector<ShapeSceneEntity> &shapes) -> std::vector<Primitive> {
@@ -1395,10 +1393,9 @@ Primitive BasicScene::CreateAggregate(
         pstd::vector<pstd::vector<pbrt::Shape>> shapeVectors(shapes.size());
         ParallelFor(0, shapes.size(), [&](int64_t i) {
             const auto &sh = shapes[i];
-            shapeVectors[i] =
-                Shape::Create(geometryIndex++, sh.name, sh.renderFromObject,
-                              sh.objectFromRender, sh.reverseOrientation, sh.parameters,
-                              textures.floatTextures, &sh.loc, alloc);
+            shapeVectors[i] = Shape::Create(
+                sh.name, sh.renderFromObject, sh.objectFromRender, sh.reverseOrientation,
+                sh.parameters, textures.floatTextures, &sh.loc, alloc);
         });
 
         std::vector<Primitive> primitives;
@@ -1459,9 +1456,9 @@ Primitive BasicScene::CreateAggregate(
         primitives.reserve(shapes.size());
 
         for (auto &sh : shapes) {
-            pstd::vector<pbrt::Shape> shapes = Shape::Create(
-                geometryIndex++, sh.name, sh.identity, sh.identity, sh.reverseOrientation,
-                sh.parameters, textures.floatTextures, &sh.loc, alloc);
+            pstd::vector<pbrt::Shape> shapes =
+                Shape::Create(sh.name, sh.identity, sh.identity, sh.reverseOrientation,
+                              sh.parameters, textures.floatTextures, &sh.loc, alloc);
             if (shapes.empty())
                 continue;
 
@@ -1503,7 +1500,7 @@ Primitive BasicScene::CreateAggregate(
 
             // Create single _Primitive_ for _prims_
             if (prims.size() > 1) {
-                Primitive bvh = new BVHAggregate(prims[0].Id(), std::move(prims));
+                Primitive bvh = new BVHAggregate(std::move(prims));
                 prims.clear();
                 prims.push_back(bvh);
             }
@@ -1546,8 +1543,7 @@ Primitive BasicScene::CreateAggregate(
         if (instancePrimitives.size() > 1) {
             // For instanced primitives, geometry id is from instance id,
             // not from inner primitive, so here we just set it to invalid
-            Primitive bvh =
-                new BVHAggregate(InvalidGeometryId, std::move(instancePrimitives));
+            Primitive bvh = new BVHAggregate(std::move(instancePrimitives));
             instancePrimitives.clear();
             instancePrimitives.push_back(bvh);
         }
@@ -1575,8 +1571,8 @@ Primitive BasicScene::CreateAggregate(
             continue;
 
         if (inst.renderFromInstance)
-            primitives.push_back(new TransformedPrimitive(geometryIndex++, iter->second,
-                                                          inst.renderFromInstance));
+            primitives.push_back(
+                new TransformedPrimitive(iter->second, inst.renderFromInstance));
         else {
             primitives.push_back(
                 new AnimatedPrimitive(iter->second, *inst.renderFromInstanceAnim));
@@ -1592,8 +1588,8 @@ Primitive BasicScene::CreateAggregate(
     Primitive aggregate = nullptr;
     LOG_VERBOSE("Starting top-level accelerator");
     if (!primitives.empty())
-        aggregate = CreateAccelerator(geometryIndex++, accelerator.name,
-                                      std::move(primitives), accelerator.parameters);
+        aggregate = CreateAccelerator(accelerator.name, std::move(primitives),
+                                      accelerator.parameters);
     LOG_VERBOSE("Finished top-level accelerator");
     return aggregate;
 }

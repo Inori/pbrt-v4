@@ -16,8 +16,7 @@
 
 namespace pbrt {
 
-Primitive CreateAccelerator(unsigned int id, const std::string &name,
-                            std::vector<Primitive> prims,
+Primitive CreateAccelerator(const std::string &name, std::vector<Primitive> prims,
                             const ParameterDictionary &parameters);
 
 struct BVHBuildNode;
@@ -32,13 +31,11 @@ class BVHAggregate {
     enum class SplitMethod { SAH, HLBVH, Middle, EqualCounts };
 
     // BVHAggregate Public Methods
-    BVHAggregate(unsigned int id, std::vector<Primitive> p, int maxPrimsInNode = 1,
+    BVHAggregate(std::vector<Primitive> p, int maxPrimsInNode = 1,
                  SplitMethod splitMethod = SplitMethod::SAH);
 
-    static BVHAggregate *Create(unsigned int id, std::vector<Primitive> prims,
+    static BVHAggregate *Create(std::vector<Primitive> prims,
                                 const ParameterDictionary &parameters);
-
-    unsigned int Id() const;
 
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &ray, Float tMax) const;
@@ -70,7 +67,6 @@ class BVHAggregate {
     std::vector<Primitive> primitives;
     SplitMethod splitMethod;
     LinearBVHNode *nodes = nullptr;
-    unsigned int geometryId;
 };
 
 struct KdTreeNode;
@@ -80,12 +76,10 @@ struct BoundEdge;
 class KdTreeAggregate {
   public:
     // KdTreeAggregate Public Methods
-    KdTreeAggregate(unsigned int id, std::vector<Primitive> p, int isectCost = 5, int traversalCost = 1,
+    KdTreeAggregate(std::vector<Primitive> p, int isectCost = 5, int traversalCost = 1,
                     Float emptyBonus = 0.5, int maxPrims = 1, int maxDepth = -1);
-    static KdTreeAggregate *Create(unsigned int id, std::vector<Primitive> prims,
+    static KdTreeAggregate *Create(std::vector<Primitive> prims,
                                    const ParameterDictionary &parameters);
-
-    unsigned int Id() const;
 
     pstd::optional<ShapeIntersection> Intersect(const Ray &ray, Float tMax) const;
 
@@ -109,7 +103,6 @@ class KdTreeAggregate {
     KdTreeNode *nodes;
     int nAllocedNodes, nextFreeNode;
     Bounds3f bounds;
-    unsigned int geometryId;
 };
 
 }  // namespace pbrt

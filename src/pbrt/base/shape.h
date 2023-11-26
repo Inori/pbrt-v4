@@ -29,7 +29,6 @@ struct ShapeSample;
 struct ShapeIntersection;
 struct ShapeSampleContext;
 
-static constexpr unsigned int InvalidGeometryId = static_cast<unsigned int>(-1);
 
 // Shape Definition
 class Shape
@@ -39,14 +38,12 @@ class Shape
     using TaggedPointer::TaggedPointer;
 
     static pstd::vector<Shape> Create(
-        unsigned int id, const std::string &name, const Transform *renderFromObject,
+        const std::string &name, const Transform *renderFromObject,
         const Transform *objectFromRender, bool reverseOrientation,
         const ParameterDictionary &parameters,
         const std::map<std::string, FloatTexture> &floatTextures, const FileLoc *loc,
         Allocator alloc);
     std::string ToString() const;
-
-    PBRT_CPU_GPU inline unsigned int Id() const;
 
     PBRT_CPU_GPU inline Bounds3f Bounds() const;
 

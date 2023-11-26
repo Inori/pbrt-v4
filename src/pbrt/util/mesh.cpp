@@ -22,12 +22,12 @@ STAT_RATIO("Geometry/Triangles per mesh", nTris, nTriMeshes);
 STAT_MEMORY_COUNTER("Memory/Triangles", triangleBytes);
 
 // TriangleMesh Method Definitions
-TriangleMesh::TriangleMesh(unsigned int id, const Transform &renderFromObject,
-                           bool reverseOrientation, std::vector<int> indices,
-                           std::vector<Point3f> p, std::vector<Vector3f> s,
-                           std::vector<Normal3f> n, std::vector<Point2f> uv,
-                           std::vector<int> faceIndices, Allocator alloc)
-    : geometryId(id), nTriangles(indices.size() / 3), nVertices(p.size()) {
+TriangleMesh::TriangleMesh(const Transform &renderFromObject, bool reverseOrientation,
+                           std::vector<int> indices, std::vector<Point3f> p,
+                           std::vector<Vector3f> s, std::vector<Normal3f> n,
+                           std::vector<Point2f> uv, std::vector<int> faceIndices,
+                           Allocator alloc)
+    : nTriangles(indices.size() / 3), nVertices(p.size()) {
     CHECK_EQ((indices.size() % 3), 0);
     ++nTriMeshes;
     nTris += nTriangles;
@@ -114,7 +114,6 @@ bool WritePLY(std::string filename, pstd::span<const int> triIndices,
               pstd::span<const int> quadIndices, pstd::span<const Point3f> p,
               pstd::span<const Normal3f> n, pstd::span<const Point2f> uv,
               pstd::span<const int> faceIndices) {
-
     std::filesystem::path filepath = filename;
     if (filepath.has_parent_path()) {
         auto parentPath = filepath.parent_path();
@@ -195,13 +194,12 @@ bool WritePLY(std::string filename, pstd::span<const int> triIndices,
 STAT_RATIO("Geometry/Bilinear patches per mesh", nBlps, nBilinearMeshes);
 STAT_MEMORY_COUNTER("Memory/Bilinear patches", blpBytes);
 
-BilinearPatchMesh::BilinearPatchMesh(unsigned int id, const Transform &renderFromObject,
+BilinearPatchMesh::BilinearPatchMesh(const Transform &renderFromObject,
                                      bool reverseOrientation, std::vector<int> indices,
                                      std::vector<Point3f> P, std::vector<Normal3f> N,
                                      std::vector<Point2f> UV, std::vector<int> fIndices,
                                      PiecewiseConstant2D *imageDist, Allocator alloc)
-    : geometryId(id),
-      reverseOrientation(reverseOrientation),
+    : reverseOrientation(reverseOrientation),
       transformSwapsHandedness(renderFromObject.SwapsHandedness()),
       nPatches(indices.size() / 4),
       nVertices(P.size()),

@@ -12,9 +12,8 @@
 namespace pbrt {
 
 // LoopSubdiv Declarations
-TriangleMesh *LoopSubdivide(unsigned int id, const Transform *renderFromObject,
-                            bool reverseOrientation, int nLevels,
-                            pstd::span<const int> vertexIndices,
+TriangleMesh *LoopSubdivide(const Transform *renderFromObject, bool reverseOrientation,
+                            int nLevels, pstd::span<const int> vertexIndices,
                             pstd::span<const Point3f> p, Allocator alloc);
 
 }  // namespace pbrt

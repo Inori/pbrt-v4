@@ -72,7 +72,7 @@ std::string Sphere::ToString() const {
                         thetaZMax, phiMax);
 }
 
-Sphere *Sphere::Create(unsigned int id, const Transform *renderFromObject,
+Sphere *Sphere::Create(const Transform *renderFromObject,
                        const Transform *objectFromRender, bool reverseOrientation,
                        const ParameterDictionary &parameters, const FileLoc *loc,
                        Allocator alloc) {
@@ -80,7 +80,7 @@ Sphere *Sphere::Create(unsigned int id, const Transform *renderFromObject,
     Float zmin = parameters.GetOneFloat("zmin", -radius);
     Float zmax = parameters.GetOneFloat("zmax", radius);
     Float phimax = parameters.GetOneFloat("phimax", 360.f);
-    return alloc.new_object<Sphere>(id, renderFromObject, objectFromRender,
+    return alloc.new_object<Sphere>(renderFromObject, objectFromRender,
                                     reverseOrientation, radius, zmin, zmax, phimax);
 }
 
@@ -107,16 +107,14 @@ std::string Disk::ToString() const {
         transformSwapsHandedness, height, radius, innerRadius, phiMax);
 }
 
-Disk *Disk::Create(unsigned int id, const Transform *renderFromObject,
-                   const Transform *objectFromRender,
+Disk *Disk::Create(const Transform *renderFromObject, const Transform *objectFromRender,
                    bool reverseOrientation, const ParameterDictionary &parameters,
                    const FileLoc *loc, Allocator alloc) {
     Float height = parameters.GetOneFloat("height", 0.);
     Float radius = parameters.GetOneFloat("radius", 1);
     Float innerRadius = parameters.GetOneFloat("innerradius", 0);
     Float phimax = parameters.GetOneFloat("phimax", 360);
-    return alloc.new_object<Disk>(id, renderFromObject, objectFromRender,
-                                  reverseOrientation,
+    return alloc.new_object<Disk>(renderFromObject, objectFromRender, reverseOrientation,
                                   height, radius, innerRadius, phimax);
 }
 
@@ -135,7 +133,7 @@ std::string Cylinder::ToString() const {
                         transformSwapsHandedness, radius, zMin, zMax, phiMax);
 }
 
-Cylinder *Cylinder::Create(unsigned int id, const Transform *renderFromObject,
+Cylinder *Cylinder::Create(const Transform *renderFromObject,
                            const Transform *objectFromRender, bool reverseOrientation,
                            const ParameterDictionary &parameters, const FileLoc *loc,
                            Allocator alloc) {
@@ -143,7 +141,7 @@ Cylinder *Cylinder::Create(unsigned int id, const Transform *renderFromObject,
     Float zmin = parameters.GetOneFloat("zmin", -1);
     Float zmax = parameters.GetOneFloat("zmax", 1);
     Float phimax = parameters.GetOneFloat("phimax", 360);
-    return alloc.new_object<Cylinder>(id, renderFromObject, objectFromRender,
+    return alloc.new_object<Cylinder>(renderFromObject, objectFromRender,
                                       reverseOrientation, radius, zmin, zmax, phimax);
 }
 
@@ -285,9 +283,8 @@ pstd::vector<Shape> Triangle::CreateTriangles(const TriangleMesh *mesh, Allocato
 
     pstd::vector<Shape> tris(mesh->nTriangles, alloc);
     Triangle *t = alloc.allocate_object<Triangle>(mesh->nTriangles);
-    unsigned int geometryId = mesh->geometryId;
     for (int i = 0; i < mesh->nTriangles; ++i) {
-        alloc.construct(&t[i], geometryId, meshIndex, i);
+        alloc.construct(&t[i], meshIndex, i);
         tris[i] = &t[i];
     }
     triangleBytes += mesh->nTriangles * sizeof(Triangle);
@@ -338,7 +335,7 @@ pstd::optional<ShapeIntersection> Triangle::Intersect(const Ray &ray, Float tMax
 #ifndef PBRT_IS_GPU_CODE
     ++nTriHits;
 #endif
-    return ShapeIntersection{intr, triIsect->t, geometryId};
+    return ShapeIntersection{intr, triIsect->t};
 }
 
 bool Triangle::IntersectP(const Ray &ray, Float tMax) const {
@@ -372,7 +369,7 @@ std::string Triangle::ToString() const {
                         meshIndex, triIndex, p0, p1, p2);
 }
 
-TriangleMesh *Triangle::CreateMesh(unsigned int id, const Transform *renderFromObject,
+TriangleMesh *Triangle::CreateMesh(const Transform *renderFromObject,
                                    bool reverseOrientation,
                                    const ParameterDictionary &parameters,
                                    const FileLoc *loc, Allocator alloc) {
@@ -440,8 +437,8 @@ TriangleMesh *Triangle::CreateMesh(unsigned int id, const Transform *renderFromO
     }
 
     return alloc.new_object<TriangleMesh>(
-        id, *renderFromObject, reverseOrientation, std::move(vi), std::move(P),
-        std::move(S), std::move(N), std::move(uvs), std::move(faceIndices), alloc);
+        *renderFromObject, reverseOrientation, std::move(vi), std::move(P), std::move(S),
+        std::move(N), std::move(uvs), std::move(faceIndices), alloc);
 }
 
 STAT_MEMORY_COUNTER("Memory/Curves", curveBytes);
@@ -498,7 +495,7 @@ std::string CurveCommon::ToString() const {
         reverseOrientation, transformSwapsHandedness);
 }
 
-pstd::vector<Shape> CreateCurve(unsigned int id, const Transform *renderFromObject,
+pstd::vector<Shape> CreateCurve(const Transform *renderFromObject,
                                 const Transform *objectFromRender,
                                 bool reverseOrientation, pstd::span<const Point3f> c,
                                 Float w0, Float w1, CurveType type,
@@ -513,7 +510,7 @@ pstd::vector<Shape> CreateCurve(unsigned int id, const Transform *renderFromObje
     for (int i = 0; i < nSegments; ++i) {
         Float uMin = i / (Float)nSegments;
         Float uMax = (i + 1) / (Float)nSegments;
-        alloc.construct(&curves[i], id, common, uMin, uMax);
+        alloc.construct(&curves[i], common, uMin, uMax);
         segments[i] = &curves[i];
         ++nSplitCurves;
     }
@@ -731,7 +728,7 @@ bool Curve::RecursiveIntersect(const Ray &ray, Float tMax, pstd::span<const Poin
                                     Normal3f(), ray.time, flipNormal);
             intr = (*common->renderFromObject)(intr);
 
-            *si = ShapeIntersection{intr, tHit, geometryId};
+            *si = ShapeIntersection{intr, tHit};
         }
 #ifndef PBRT_IS_GPU_CODE
         ++nCurveHits;
@@ -765,7 +762,7 @@ std::string Curve::ToString() const {
     return StringPrintf("[ Curve common: %s uMin: %f uMax: %f ]", *common, uMin, uMax);
 }
 
-pstd::vector<Shape> Curve::Create(unsigned int id, const Transform *renderFromObject,
+pstd::vector<Shape> Curve::Create(const Transform *renderFromObject,
                                   const Transform *objectFromRender,
                                   bool reverseOrientation,
                                   const ParameterDictionary &parameters,
@@ -897,7 +894,7 @@ pstd::vector<Shape> Curve::Create(unsigned int id, const Transform *renderFromOb
         if (!n.empty())
             nspan = pstd::MakeSpan(&n[seg], 2);
         auto c =
-            CreateCurve(id, renderFromObject, objectFromRender, reverseOrientation,
+            CreateCurve(renderFromObject, objectFromRender, reverseOrientation,
                         segCpBezier, Lerp(Float(seg) / Float(nSegments), width0, width1),
                         Lerp(Float(seg + 1) / Float(nSegments), width0, width1), type,
                         nspan, sd, alloc);
@@ -914,8 +911,7 @@ std::string BilinearIntersection::ToString() const {
     return StringPrintf("[ BilinearIntersection uv: %s t: %f", uv, t);
 }
 
-BilinearPatchMesh *BilinearPatch::CreateMesh(unsigned int id,
-                                             const Transform *renderFromObject,
+BilinearPatchMesh *BilinearPatch::CreateMesh(const Transform *renderFromObject,
                                              bool reverseOrientation,
                                              const ParameterDictionary &parameters,
                                              const FileLoc *loc, Allocator alloc) {
@@ -1002,7 +998,7 @@ BilinearPatchMesh *BilinearPatch::CreateMesh(unsigned int id,
     }
 
     return alloc.new_object<BilinearPatchMesh>(
-        id, *renderFromObject, reverseOrientation, std::move(vertexIndices), std::move(P),
+        *renderFromObject, reverseOrientation, std::move(vertexIndices), std::move(P),
         std::move(N), std::move(uv), std::move(faceIndices), imageDist, alloc);
 }
 
@@ -1043,7 +1039,7 @@ STAT_MEMORY_COUNTER("Memory/Bilinear patches", blpBytes);
 
 // BilinearPatch Method Definitions
 BilinearPatch::BilinearPatch(const BilinearPatchMesh *mesh, int meshIndex, int blpIndex)
-    : ShapeBase(mesh->geometryId), meshIndex(meshIndex), blpIndex(blpIndex) {
+    : meshIndex(meshIndex), blpIndex(blpIndex) {
     blpBytes += sizeof(*this);
     // Store area of bilinear patch in _area_
     // Get bilinear patch vertices in _p00_, _p01_, _p10_, and _p11_
@@ -1146,7 +1142,7 @@ pstd::optional<ShapeIntersection> BilinearPatch::Intersect(const Ray &ray,
         return {};
     SurfaceInteraction intr =
         InteractionFromIntersection(mesh, blpIndex, blpIsect->uv, ray.time, -ray.d);
-    return ShapeIntersection{intr, blpIsect->t, geometryId};
+    return ShapeIntersection{intr, blpIsect->t};
 }
 
 bool BilinearPatch::IntersectP(const Ray &ray, Float tMax) const {
@@ -1386,39 +1382,38 @@ STAT_COUNTER("Geometry/Disks", nDisks);
 STAT_COUNTER("Geometry/Triangles added from displacement mapping", displacedTrisDelta);
 
 pstd::vector<Shape> Shape::Create(
-    unsigned int id, const std::string &name, const Transform *renderFromObject,
+    const std::string &name, const Transform *renderFromObject,
     const Transform *objectFromRender, bool reverseOrientation,
     const ParameterDictionary &parameters,
     const std::map<std::string, FloatTexture> &floatTextures, const FileLoc *loc,
     Allocator alloc) {
     pstd::vector<Shape> shapes(alloc);
     if (name == "sphere") {
-        shapes = {Sphere::Create(id, renderFromObject, objectFromRender, reverseOrientation,
+        shapes = {Sphere::Create(renderFromObject, objectFromRender, reverseOrientation,
                                  parameters, loc, alloc)};
         ++nSpheres;
     }
     // Create remaining single _Shape_ types
     else if (name == "cylinder") {
-        shapes = {Cylinder::Create(id, renderFromObject, objectFromRender,
-                                   reverseOrientation,
+        shapes = {Cylinder::Create(renderFromObject, objectFromRender, reverseOrientation,
                                    parameters, loc, alloc)};
         ++nCylinders;
     } else if (name == "disk") {
-        shapes = {Disk::Create(id, renderFromObject, objectFromRender, reverseOrientation,
+        shapes = {Disk::Create(renderFromObject, objectFromRender, reverseOrientation,
                                parameters, loc, alloc)};
         ++nDisks;
     } else if (name == "bilinearmesh") {
         BilinearPatchMesh *mesh = BilinearPatch::CreateMesh(
-            id, renderFromObject, reverseOrientation, parameters, loc, alloc);
+            renderFromObject, reverseOrientation, parameters, loc, alloc);
         shapes = BilinearPatch::CreatePatches(mesh, alloc);
     }
     // Create multiple-_Shape_ types
     else if (name == "curve")
-        shapes = Curve::Create(id, renderFromObject, objectFromRender, reverseOrientation,
+        shapes = Curve::Create(renderFromObject, objectFromRender, reverseOrientation,
                                parameters, loc, alloc);
     else if (name == "trianglemesh") {
-        TriangleMesh *mesh = Triangle::CreateMesh(
-            id, renderFromObject, reverseOrientation, parameters, loc, alloc);
+        TriangleMesh *mesh = Triangle::CreateMesh(renderFromObject, reverseOrientation,
+                                                  parameters, loc, alloc);
         shapes = Triangle::CreateTriangles(mesh, alloc);
     } else if (name == "plymesh") {
         std::string filename = ResolveFilename(parameters.GetOneString("filename", ""));
@@ -1464,7 +1459,7 @@ pstd::vector<Shape> Shape::Create(
 
         if (!plyMesh.triIndices.empty()) {
             TriangleMesh *mesh = alloc.new_object<TriangleMesh>(
-                id, *renderFromObject, reverseOrientation, plyMesh.triIndices, plyMesh.p,
+                *renderFromObject, reverseOrientation, plyMesh.triIndices, plyMesh.p,
                 std::vector<Vector3f>(), plyMesh.n, plyMesh.uv, plyMesh.faceIndices,
                 alloc);
             shapes = Triangle::CreateTriangles(mesh, alloc);
@@ -1472,7 +1467,7 @@ pstd::vector<Shape> Shape::Create(
 
         if (!plyMesh.quadIndices.empty()) {
             BilinearPatchMesh *mesh = alloc.new_object<BilinearPatchMesh>(
-                id, *renderFromObject, reverseOrientation, plyMesh.quadIndices, plyMesh.p,
+                *renderFromObject, reverseOrientation, plyMesh.quadIndices, plyMesh.p,
                 plyMesh.n, plyMesh.uv, plyMesh.faceIndices, nullptr /* image dist */,
                 alloc);
             pstd::vector<Shape> quadMesh = BilinearPatch::CreatePatches(mesh, alloc);
@@ -1492,8 +1487,8 @@ pstd::vector<Shape> Shape::Create(
         // don't actually use this for now...
         std::string scheme = parameters.GetOneString("scheme", "loop");
 
-        TriangleMesh *mesh = LoopSubdivide(id, renderFromObject, reverseOrientation,
-                                           nLevels, vertexIndices, P, alloc);
+        TriangleMesh *mesh = LoopSubdivide(renderFromObject, reverseOrientation, nLevels,
+                                           vertexIndices, P, alloc);
 
         shapes = Triangle::CreateTriangles(mesh, alloc);
     } else

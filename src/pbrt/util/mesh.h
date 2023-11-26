@@ -24,9 +24,9 @@ namespace pbrt {
 class TriangleMesh {
   public:
     // TriangleMesh Public Methods
-    TriangleMesh(unsigned int id, const Transform &renderFromObject,
-                 bool reverseOrientation, std::vector<int> vertexIndices,
-                 std::vector<Point3f> p, std::vector<Vector3f> S, std::vector<Normal3f> N,
+    TriangleMesh(const Transform &renderFromObject, bool reverseOrientation,
+                 std::vector<int> vertexIndices, std::vector<Point3f> p,
+                 std::vector<Vector3f> S, std::vector<Normal3f> N,
                  std::vector<Point2f> uv, std::vector<int> faceIndices, Allocator alloc);
 
     std::string ToString() const;
@@ -44,18 +44,17 @@ class TriangleMesh {
     const Point2f *uv = nullptr;
     const int *faceIndices = nullptr;
     bool reverseOrientation, transformSwapsHandedness;
-    unsigned int geometryId;
 };
 
 // BilinearPatchMesh Definition
 class BilinearPatchMesh {
   public:
     // BilinearPatchMesh Public Methods
-    BilinearPatchMesh(unsigned int id, const Transform &renderFromObject,
-                      bool reverseOrientation, std::vector<int> vertexIndices,
-                      std::vector<Point3f> p, std::vector<Normal3f> N,
-                      std::vector<Point2f> uv, std::vector<int> faceIndices,
-                      PiecewiseConstant2D *imageDist, Allocator alloc);
+    BilinearPatchMesh(const Transform &renderFromObject, bool reverseOrientation,
+                      std::vector<int> vertexIndices, std::vector<Point3f> p,
+                      std::vector<Normal3f> N, std::vector<Point2f> uv,
+                      std::vector<int> faceIndices, PiecewiseConstant2D *imageDist,
+                      Allocator alloc);
 
     std::string ToString() const;
 
@@ -70,7 +69,6 @@ class BilinearPatchMesh {
     const Point2f *uv = nullptr;
     const int *faceIndices = nullptr;
     PiecewiseConstant2D *imageDistribution;
-    unsigned int geometryId;
 };
 
 // HashIntPair Definition

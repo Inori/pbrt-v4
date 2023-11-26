@@ -93,7 +93,7 @@ PBRT_CPU_GPU inline Ray ShapeSampleContext::SpawnRay(Vector3f w) const {
 struct ShapeIntersection {
     SurfaceInteraction intr;
     Float tHit;
-    unsigned int geometryId;
+
     std::string ToString() const;
 };
 
@@ -104,34 +104,20 @@ struct QuadricIntersection {
     Float phi;
 };
 
-class ShapeBase {
-  public:
-    ShapeBase(unsigned int id) : geometryId(id){
-    };
-
-    PBRT_CPU_GPU
-    unsigned int Id() const { return geometryId; }
-
-  protected:
-    const unsigned int geometryId;
-};
-
 // Sphere Definition
-class Sphere : public ShapeBase {
+class Sphere {
   public:
     // Sphere Public Methods
-    static Sphere *Create(unsigned int id, const Transform *renderFromObject,
+    static Sphere *Create(const Transform *renderFromObject,
                           const Transform *objectFromRender, bool reverseOrientation,
                           const ParameterDictionary &parameters, const FileLoc *loc,
                           Allocator alloc);
 
     std::string ToString() const;
 
-    Sphere(unsigned int id, const Transform *renderFromObject,
-           const Transform *objectFromRender,
+    Sphere(const Transform *renderFromObject, const Transform *objectFromRender,
            bool reverseOrientation, Float radius, Float zMin, Float zMax, Float phiMax)
-        : ShapeBase(id),
-          renderFromObject(renderFromObject),
+        : renderFromObject(renderFromObject),
           objectFromRender(objectFromRender),
           reverseOrientation(reverseOrientation),
           transformSwapsHandedness(renderFromObject->SwapsHandedness()),
@@ -141,8 +127,6 @@ class Sphere : public ShapeBase {
           thetaZMin(std::acos(Clamp(std::min(zMin, zMax) / radius, -1, 1))),
           thetaZMax(std::acos(Clamp(std::max(zMin, zMax) / radius, -1, 1))),
           phiMax(Radians(Clamp(phiMax, 0, 360))) {}
-
-
 
     PBRT_CPU_GPU
     Bounds3f Bounds() const;
@@ -157,7 +141,7 @@ class Sphere : public ShapeBase {
         if (!isect)
             return {};
         SurfaceInteraction intr = InteractionFromIntersection(*isect, -ray.d, ray.time);
-        return ShapeIntersection{intr, isect->tHit, geometryId};
+        return ShapeIntersection{intr, isect->tHit};
     }
 
     PBRT_CPU_GPU
@@ -418,15 +402,13 @@ class Sphere : public ShapeBase {
 };
 
 // Disk Definition
-class Disk : public ShapeBase {
+class Disk {
   public:
     // Disk Public Methods
-    Disk(unsigned int id, const Transform *renderFromObject,
-         const Transform *objectFromRender,
+    Disk(const Transform *renderFromObject, const Transform *objectFromRender,
          bool reverseOrientation, Float height, Float radius, Float innerRadius,
          Float phiMax)
-        : ShapeBase(id),
-          renderFromObject(renderFromObject),
+        : renderFromObject(renderFromObject),
           objectFromRender(objectFromRender),
           reverseOrientation(reverseOrientation),
           transformSwapsHandedness(renderFromObject->SwapsHandedness()),
@@ -435,7 +417,7 @@ class Disk : public ShapeBase {
           innerRadius(innerRadius),
           phiMax(Radians(Clamp(phiMax, 0, 360))) {}
 
-    static Disk *Create(unsigned int id, const Transform *renderFromObject,
+    static Disk *Create(const Transform *renderFromObject,
                         const Transform *objectFromRender, bool reverseOrientation,
                         const ParameterDictionary &parameters, const FileLoc *loc,
                         Allocator alloc);
@@ -458,7 +440,7 @@ class Disk : public ShapeBase {
         if (!isect)
             return {};
         SurfaceInteraction intr = InteractionFromIntersection(*isect, -ray.d, ray.time);
-        return ShapeIntersection{intr, isect->tHit, geometryId};
+        return ShapeIntersection{intr, isect->tHit};
     }
 
     PBRT_CPU_GPU
@@ -590,14 +572,13 @@ class Disk : public ShapeBase {
 };
 
 // Cylinder Definition
-class Cylinder : public ShapeBase {
+class Cylinder {
   public:
     // Cylinder Public Methods
-    Cylinder(unsigned int id, const Transform *renderFromObj,
-             const Transform *objFromRender,
+    Cylinder(const Transform *renderFromObj, const Transform *objFromRender,
              bool reverseOrientation, Float radius, Float zMin, Float zMax, Float phiMax);
 
-    static Cylinder *Create(unsigned int id, const Transform *renderFromObject,
+    static Cylinder *Create(const Transform *renderFromObject,
                             const Transform *objectFromRender, bool reverseOrientation,
                             const ParameterDictionary &parameters, const FileLoc *loc,
                             Allocator alloc);
@@ -620,7 +601,7 @@ class Cylinder : public ShapeBase {
         if (!isect)
             return {};
         SurfaceInteraction intr = InteractionFromIntersection(*isect, -ray.d, ray.time);
-        return ShapeIntersection{intr, isect->tHit, geometryId};
+        return ShapeIntersection{intr, isect->tHit};
     }
 
     PBRT_CPU_GPU
@@ -819,11 +800,10 @@ class Cylinder : public ShapeBase {
 };
 
 // Cylinder Inline Methods
-inline Cylinder::Cylinder(unsigned int id, const Transform *renderFromObject,
+inline Cylinder::Cylinder(const Transform *renderFromObject,
                           const Transform *objectFromRender, bool reverseOrientation,
                           Float radius, Float zMin, Float zMax, Float phiMax)
-    : ShapeBase(id),
-      renderFromObject(renderFromObject),
+    : renderFromObject(renderFromObject),
       objectFromRender(objectFromRender),
       reverseOrientation(reverseOrientation),
       transformSwapsHandedness(renderFromObject->SwapsHandedness()),
@@ -851,14 +831,14 @@ pstd::optional<TriangleIntersection> IntersectTriangle(const Ray &ray, Float tMa
                                                        Point3f p2);
 
 // Triangle Definition
-class Triangle : public ShapeBase {
+class Triangle {
   public:
     // Triangle Public Methods
     static pstd::vector<Shape> CreateTriangles(const TriangleMesh *mesh, Allocator alloc);
 
     Triangle() = default;
-    Triangle(unsigned int shapeId, int meshIndex, int triIndex)
-        : ShapeBase(shapeId), meshIndex(meshIndex), triIndex(triIndex) {}
+    Triangle(int meshIndex, int triIndex)
+        : meshIndex(meshIndex), triIndex(triIndex) {}
 
     static void Init(Allocator alloc);
 
@@ -886,7 +866,7 @@ class Triangle : public ShapeBase {
 
     std::string ToString() const;
 
-    static TriangleMesh *CreateMesh(unsigned int id, const Transform *renderFromObject,
+    static TriangleMesh *CreateMesh(const Transform *renderFromObject,
                                     bool reverseOrientation,
                                     const ParameterDictionary &parameters,
                                     const FileLoc *loc, Allocator alloc);
@@ -1238,10 +1218,10 @@ struct CurveCommon {
 };
 
 // Curve Definition
-class Curve : public ShapeBase {
+class Curve {
   public:
     // Curve Public Methods
-    static pstd::vector<Shape> Create(unsigned int id, const Transform *renderFromObject,
+    static pstd::vector<Shape> Create(const Transform *renderFromObject,
                                       const Transform *objectFromRender,
                                       bool reverseOrientation,
                                       const ParameterDictionary &parameters,
@@ -1266,8 +1246,8 @@ class Curve : public ShapeBase {
 
     std::string ToString() const;
 
-    Curve(unsigned int id, const CurveCommon *common, Float uMin, Float uMax)
-        : ShapeBase(id), common(common), uMin(uMin), uMax(uMax) {}
+    Curve(const CurveCommon *common, Float uMin, Float uMax)
+        : common(common), uMin(uMin), uMax(uMax) {}
 
     PBRT_CPU_GPU
     DirectionCone NormalBounds() const { return DirectionCone::EntireSphere(); }
@@ -1369,15 +1349,14 @@ PBRT_CPU_GPU inline pstd::optional<BilinearIntersection> IntersectBilinearPatch(
 }
 
 // BilinearPatch Definition
-class BilinearPatch : public ShapeBase {
+class BilinearPatch {
   public:
     // BilinearPatch Public Methods
     BilinearPatch(const BilinearPatchMesh *mesh, int meshIndex, int blpIndex);
 
     static void Init(Allocator alloc);
 
-    static BilinearPatchMesh *CreateMesh(unsigned int id,
-                                         const Transform *renderFromObject,
+    static BilinearPatchMesh *CreateMesh(const Transform *renderFromObject,
                                          bool reverseOrientation,
                                          const ParameterDictionary &parameters,
                                          const FileLoc *loc, Allocator alloc);
@@ -1560,11 +1539,6 @@ class BilinearPatch : public ShapeBase {
     Float area;
     static constexpr Float MinSphericalSampleArea = 1e-4;
 };
-
-inline unsigned int Shape::Id() const {
-    auto id = [&](auto ptr) { return ptr->Id(); };
-    return Dispatch(id);
-}
 
 inline Bounds3f Shape::Bounds() const {
     auto bounds = [&](auto ptr) { return ptr->Bounds(); };
