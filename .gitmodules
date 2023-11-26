@@ -21,6 +21,7 @@
 	path = src/ext/openvdb
 	url = https://github.com/AcademySoftwareFoundation/openvdb.git
 	branch = feature/nanovdb
+	ignore = dirty
 [submodule "src/ext/libdeflate"]
 	path = src/ext/libdeflate
 	url = https://github.com/mmp/libdeflate.git
