@@ -1,0 +1,6 @@
+{
+    "python.autoComplete.extraPaths": [
+        "E:\\Software\\Autodesk\\3ds Max 2024\\Python\\Lib\\site-packages"
+    ],
+    "python.defaultInterpreterPath": "E:\\Software\\Autodesk\\3ds Max 2024\\Python\\python.exe"
+}
