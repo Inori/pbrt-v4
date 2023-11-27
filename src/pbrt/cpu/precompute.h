@@ -8,7 +8,7 @@ namespace pbrt
 
 struct Voxel {
     Bounds3f box;
-    bool insideObject;
+    bool overlap;
     int id;
 
     std::string ToString() const;
@@ -42,9 +42,7 @@ class PrtProbeIntegrator : public Integrator {
 
     pstd::vector<Voxel> VoxelizeScene();
 
-    bool IsVoxelInsideObject(const Voxel &voxel);
-
-    void DetectVoxelsInside(pstd::vector<Voxel> &voxels);
+    void SurfaceVoxelize(pstd::vector<Voxel> &voxels);
 
     void WriteVoxels(const pstd::vector<Voxel> &voxels);
 

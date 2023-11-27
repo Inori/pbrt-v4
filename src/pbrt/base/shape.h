@@ -54,6 +54,8 @@ class Shape
 
     PBRT_CPU_GPU inline bool IntersectP(const Ray &ray, Float tMax = Infinity) const;
 
+    PBRT_CPU_GPU inline bool IntersectB(const Bounds3f& box) const;
+
     PBRT_CPU_GPU inline Float Area() const;
 
     PBRT_CPU_GPU inline pstd::optional<ShapeSample> Sample(Point2f u) const;
@@ -65,6 +67,8 @@ class Shape
 
     PBRT_CPU_GPU inline Float PDF(const ShapeSampleContext &ctx, Vector3f wi) const;
 };
+
+
 
 }  // namespace pbrt
 

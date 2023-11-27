@@ -26,8 +26,8 @@ TriangleMesh::TriangleMesh(const Transform &renderFromObject, bool reverseOrient
                            std::vector<int> indices, std::vector<Point3f> p,
                            std::vector<Vector3f> s, std::vector<Normal3f> n,
                            std::vector<Point2f> uv, std::vector<int> faceIndices,
-                           Allocator alloc)
-    : nTriangles(indices.size() / 3), nVertices(p.size()) {
+                           Allocator alloc, const std::string &meshName)
+    : nTriangles(indices.size() / 3), nVertices(p.size()), name(meshName) {
     CHECK_EQ((indices.size() % 3), 0);
     ++nTriMeshes;
     nTris += nTriangles;
@@ -81,9 +81,10 @@ TriangleMesh::TriangleMesh(const Transform &renderFromObject, bool reverseOrient
 std::string TriangleMesh::ToString() const {
     std::string np = "(nullptr)";
     return StringPrintf(
-        "[ TriangleMesh reverseOrientation: %s transformSwapsHandedness: %s "
+        "[ TriangleMesh name: %s reverseOrientation: %s transformSwapsHandedness: %s "
         "nTriangles: %d nVertices: %d vertexIndices: %s p: %s n: %s "
         "s: %s uv: %s faceIndices: %s ]",
+        name.c_str(),
         reverseOrientation, transformSwapsHandedness, nTriangles, nVertices,
         vertexIndices ? StringPrintf("%s", pstd::MakeSpan(vertexIndices, 3 * nTriangles))
                       : np,

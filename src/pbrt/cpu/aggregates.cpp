@@ -622,6 +622,45 @@ bool BVHAggregate::IntersectP(const Ray &ray, Float tMax) const {
     return false;
 }
 
+//#pragma optimize("", off)
+bool BVHAggregate::IntersectB(const Bounds3f &box) const {
+    if (!nodes)
+        return false;
+  
+    int nodesToVisit[64];
+    int toVisitOffset = 0, currentNodeIndex = 0;
+    int nodesVisited = 0;
+
+    while (true) {
+        ++nodesVisited;
+        const LinearBVHNode *node = &nodes[currentNodeIndex];
+        if (Overlaps(node->bounds, box)) {
+            // Process BVH node _node_ for traversal
+            if (node->nPrimitives > 0) {
+                for (int i = 0; i < node->nPrimitives; ++i) {
+                    if (primitives[node->primitivesOffset + i].IntersectB(box)) {
+                        bvhNodesVisited += nodesVisited;
+                        return true;
+                    }
+                }
+                if (toVisitOffset == 0)
+                    break;
+                currentNodeIndex = nodesToVisit[--toVisitOffset];
+            } else {
+                nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+                currentNodeIndex = currentNodeIndex + 1;
+            }
+        } else {
+            if (toVisitOffset == 0)
+                break;
+            currentNodeIndex = nodesToVisit[--toVisitOffset];
+        }
+    }
+    bvhNodesVisited += nodesVisited;
+    return false;
+}
+//#pragma optimize("", on)
+
 BVHBuildNode *BVHAggregate::buildUpperSAH(Allocator alloc,
                                           std::vector<BVHBuildNode *> &treeletRoots,
                                           int start, int end,
@@ -1145,6 +1184,10 @@ bool KdTreeAggregate::IntersectP(const Ray &ray, Float raytMax) const {
         }
     }
     kdNodesVisited += nodesVisited;
+    return false;
+}
+
+bool KdTreeAggregate::IntersectB(const Bounds3f &box) const {
     return false;
 }
 

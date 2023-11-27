@@ -32,6 +32,11 @@ bool Primitive::IntersectP(const Ray &r, Float tMax) const {
     return DispatchCPU(isectp);
 }
 
+bool Primitive::IntersectB(const Bounds3f &box) const {
+    auto isectp = [&](auto ptr) { return ptr->IntersectB(box); };
+    return DispatchCPU(isectp);
+}
+
 // GeometricPrimitive Method Definitions
 GeometricPrimitive::GeometricPrimitive(Shape shape, Material material, Light areaLight,
                                        const MediumInterface &mediumInterface,
@@ -85,6 +90,10 @@ bool GeometricPrimitive::IntersectP(const Ray &r, Float tMax) const {
         return shape.IntersectP(r, tMax);
 }
 
+bool GeometricPrimitive::IntersectB(const Bounds3f &box) const {
+    return shape.IntersectB(box);
+}
+
 // SimplePrimitive Method Definitions
 SimplePrimitive::SimplePrimitive(Shape shape, Material material)
     : shape(shape), material(material) {
@@ -97,6 +106,10 @@ Bounds3f SimplePrimitive::Bounds() const {
 
 bool SimplePrimitive::IntersectP(const Ray &r, Float tMax) const {
     return shape.IntersectP(r, tMax);
+}
+
+bool SimplePrimitive::IntersectB(const Bounds3f &box) const {
+    return shape.IntersectB(box);
 }
 
 pstd::optional<ShapeIntersection> SimplePrimitive::Intersect(const Ray &r,
@@ -133,6 +146,11 @@ bool TransformedPrimitive::IntersectP(const Ray &r, Float tMax) const {
 }
 
 
+bool TransformedPrimitive::IntersectB(const Bounds3f &box) const {
+    LOG_VERBOSE("Not implemented.");
+    return false;
+}
+
 // AnimatedPrimitive Method Definitions
 AnimatedPrimitive::AnimatedPrimitive(Primitive p,
                                      const AnimatedTransform &renderFromPrimitive)
@@ -159,6 +177,10 @@ pstd::optional<ShapeIntersection> AnimatedPrimitive::Intersect(const Ray &r,
 bool AnimatedPrimitive::IntersectP(const Ray &r, Float tMax) const {
     Ray ray = renderFromPrimitive.ApplyInverse(r, &tMax);
     return primitive.IntersectP(ray, tMax);
+}
+
+bool AnimatedPrimitive::IntersectB(const Bounds3f &box) const {
+    return false;
 }
 
 }  // namespace pbrt

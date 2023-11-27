@@ -6,7 +6,7 @@ namespace pbrt
 {
     
 std::string Voxel::ToString() const {
-    return StringPrintf("[ Voxel id %d center: %s inside: %d ]", id, box.Center(), insideObject);
+    return StringPrintf("[ Voxel id %d center: %s overlap: %d ]", id, box.Centroid(), overlap);
 }
 
 std::unique_ptr<PrtProbeIntegrator> PrtProbeIntegrator::Create(
@@ -29,7 +29,7 @@ void PrtProbeIntegrator::Render() {
 
     auto voxels = VoxelizeScene();
 
-    DetectVoxelsInside(voxels);
+    
 
     WriteVoxels(voxels);
 }
@@ -93,60 +93,27 @@ pstd::vector<pbrt::Voxel> PrtProbeIntegrator::VoxelizeScene() {
             }
         }
     }
+
+    SurfaceVoxelize(voxels);
+
     return voxels;
 }
 
-bool PrtProbeIntegrator::IsVoxelInsideObject(const Voxel &voxel) {
-    
-    const Vector3f dir[6] = {{0.0, 0.0, 1.0},  {0.0, 0.0, -1.0}, {1.0, 0.0, 0.0},
-                             {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},  {0.0, -1.0, 0.0}};
-
-    bool inside = true;
-    //unsigned int firstHitGeomId = InvalidGeometryId;
-
-    //for (int i = 0; i != 6; ++i)
-    //{
-    //    Point3f o = voxel.box.Center();
-    //    Ray ray(o, dir[i]);
-
-    //    RayGeometryHit hit = IntersectN(ray);
-    //    if (!hit.hitCount) {
-    //        inside = false;
-    //        break;
-    //    }
-
-    //    // If ray starts inside an object, hit count must be odd (assuming closed surfaces)
-    //    if (hit.hitCount % 2 != 1) {
-    //        inside = false;
-    //        break;
-    //    }
-
-    //    if (i == 0) {
-    //        firstHitGeomId = hit.geometryId;
-    //    } else {
-    //        // if ray hit more than one object, it must not be inside an object
-    //        if (firstHitGeomId != hit.geometryId) {
-    //            inside = false;
-    //            break;
-    //        }
-    //    }
-    //}
-
-    return inside;
-}
-
-void PrtProbeIntegrator::DetectVoxelsInside(pstd::vector<Voxel> &voxels) {
-
-    int nVoxels = voxels.size();
-    ParallelFor(0, nVoxels, [&](int i) {
-
-    });
+//#pragma optimize("", off)
+void PrtProbeIntegrator::SurfaceVoxelize(pstd::vector<Voxel> &voxels) {
 
     for (auto& voxel : voxels)
     {
-        voxel.insideObject = IsVoxelInsideObject(voxel);
+        const Float delta = 0.1;
+        const Point3f offset = Point3f(delta, delta, delta);
+        Point3f pMin = Point3f(voxel.box.pMin + offset);
+        Point3f pMax = Point3f(voxel.box.pMax - offset);
+
+        Bounds3f adjustedBox(pMin, pMax);
+        voxel.overlap = aggregate.IntersectB(adjustedBox);
     }
 }
+//#pragma optimize("", on)
 
 void PrtProbeIntegrator::WriteVoxels(const pstd::vector<Voxel> &voxels) {
     std::stringstream ss;
@@ -158,12 +125,12 @@ void PrtProbeIntegrator::WriteVoxels(const pstd::vector<Voxel> &voxels) {
 
     for (const Voxel& voxel : voxels)
     {
-        LOG_VERBOSE("%s", voxel);
-        Point3f center = voxel.box.Center();
+        // LOG_VERBOSE("%s", voxel);
+        Point3f center = voxel.box.Centroid();
         // inverse X axis to match 3ds max coordinate
         center.x = -center.x;
         ss << voxel.id << " " << center.x << " " << center.y << " " << center.z << " "
-           << voxel.insideObject << std::endl;
+           << voxel.overlap << std::endl;
     }
 
     WriteFileContents("voxels.txt", ss.str());

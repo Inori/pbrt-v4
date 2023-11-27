@@ -39,6 +39,10 @@ Bounds3f Sphere::Bounds() const {
         Bounds3f(Point3f(-radius, -radius, zMin), Point3f(radius, radius, zMax)));
 }
 
+bool Sphere::IntersectB(const Bounds3f &box) const {
+    return false;
+}
+
 pstd::optional<ShapeSample> Sphere::Sample(Point2f u) const {
     Point3f pObj = Point3f(0, 0, 0) + radius * SampleUniformSphere(u);
     // Reproject _pObj_ to sphere surface and compute _pObjError_
@@ -97,6 +101,10 @@ DirectionCone Disk::NormalBounds() const {
     return DirectionCone(Vector3f(n));
 }
 
+bool Disk::IntersectB(const Bounds3f &box) const {
+    return false;
+}
+
 std::string Disk::ToString() const {
     return StringPrintf(
         "[ Disk renderFromObject: %s objectFromRender: %s "
@@ -131,6 +139,10 @@ std::string Cylinder::ToString() const {
                         "phiMax: %f ]",
                         *renderFromObject, *objectFromRender, reverseOrientation,
                         transformSwapsHandedness, radius, zMin, zMax, phiMax);
+}
+
+bool Cylinder::IntersectB(const Bounds3f &box) const {
+    return false;
 }
 
 Cylinder *Cylinder::Create(const Transform *renderFromObject,
@@ -272,6 +284,7 @@ pstd::optional<TriangleIntersection> IntersectTriangle(const Ray &ray, Float tMa
     return TriangleIntersection{b0, b1, b2, t};
 }
 
+
 // Triangle Method Definitions
 pstd::vector<Shape> Triangle::CreateTriangles(const TriangleMesh *mesh, Allocator alloc) {
     static std::mutex allMeshesLock;
@@ -356,6 +369,128 @@ bool Triangle::IntersectP(const Ray &ray, Float tMax) const {
     } else
         return false;
 }
+
+//#pragma optimize("", off)
+PBRT_CPU_GPU bool Triangle::IntersectB(const Bounds3f &box) const {
+    // Fast Parallel Surface and Solid Voxelization on GPUs
+    // Michael Schwarz and Hans-Peter Seidel
+    
+
+    // 1. Take the box, and the bounding-box of the triangle, and check if they overlap. If
+    // they don¡¯t, no intersection.
+    Bounds3f triBox = this->Bounds();
+    if (!Overlaps(triBox, box)) {
+        return false;
+    }
+
+    // 2. Take the plane the triangle lies upon and test to see if it intersects the box. If
+    // it doesn't, no intersection. 
+
+    // Get triangle vertices in _p0_, _p1_, and _p2_
+    const TriangleMesh *mesh = GetMesh();
+    const int *v = &mesh->vertexIndices[3 * triIndex];
+    Point3f p0 = mesh->p[v[0]], p1 = mesh->p[v[1]], p2 = mesh->p[v[2]];
+    
+    // triangle normal
+    Vector3f n = this->NormalBounds().w;
+
+    // p & delta-p
+    Point3f p = box.pMin;
+    Point3f dp = Point3f(box.pMax - p);
+
+    // critical point
+    Point3f c =
+        Point3f(n.x > 0.f ? dp.x : 0.f, 
+                n.y > 0.f ? dp.y : 0.f, 
+                n.z > 0.f ? dp.z : 0.f);
+
+    Float d1 = Dot(n, c - p0);
+    Float d2 = Dot(n, Point3f(dp - c) - p0);
+
+    if ((Dot(n, Vector3f(p)) + d1) * (Dot(n, Vector3f(p)) + d2) > 0.f)
+        return false;
+
+    // 3. For each axis-plane (xy, yz, zx), project the box and
+    // the triangle onto the plane, and see if they overlap. If any don¡¯t, no
+    // intersection.
+
+    // Edge vectors
+    Vector3f edge0 = p1 - p0;
+    Vector3f edge1 = p2 - p1;
+    Vector3f edge2 = p0 - p2;
+
+    // xy-plane projection-overlap
+    Float xym = (n.z < 0.f ? -1.f : 1.f);
+    Vector3f ne0xy = Vector3f{-edge0.y, edge0.x, 0.f} * xym;
+    Vector3f ne1xy = Vector3f{-edge1.y, edge1.x, 0.f} * xym;
+    Vector3f ne2xy = Vector3f{-edge2.y, edge2.x, 0.f} * xym;
+
+    Vector3f v0xy = Vector3f{p0.x, p0.y, 0.f};
+    Vector3f v1xy = Vector3f{p1.x, p1.y, 0.f};
+    Vector3f v2xy = Vector3f{p2.x, p2.y, 0.f};
+
+    Float de0xy =
+        -Dot(ne0xy, v0xy) + std::max(0.f, dp.x * ne0xy.x) + std::max(0.f, dp.y * ne0xy.y);
+    Float de1xy =
+        -Dot(ne1xy, v1xy) + std::max(0.f, dp.x * ne1xy.x) + std::max(0.f, dp.y * ne1xy.y);
+    Float de2xy =
+        -Dot(ne2xy, v2xy) + std::max(0.f, dp.x * ne2xy.x) + std::max(0.f, dp.y * ne2xy.y);
+
+    auto pxy = Vector3f(p.x, p.y, 0.f);
+
+    if ((Dot(ne0xy, pxy) + de0xy) < 0.f || (Dot(ne1xy, pxy) + de1xy) < 0.f ||
+        (Dot(ne2xy, pxy) + de2xy) < 0.f)
+        return false;
+
+    // yz-plane projection overlap
+    Float yzm = (n.x < 0.f ? -1.f : 1.f);
+    Vector3f ne0yz = Vector3f{-edge0.z, edge0.y, 0.f} * yzm;
+    Vector3f ne1yz = Vector3f{-edge1.z, edge1.y, 0.f} * yzm;
+    Vector3f ne2yz = Vector3f{-edge2.z, edge2.y, 0.f} * yzm;
+
+    Vector3f v0yz = Vector3f{p0.y, p0.z, 0.f};
+    Vector3f v1yz = Vector3f{p1.y, p1.z, 0.f};
+    Vector3f v2yz = Vector3f{p2.y, p2.z, 0.f};
+
+    Float de0yz =
+        -Dot(ne0yz, v0yz) + std::max(0.f, dp.y * ne0yz.x) + std::max(0.f, dp.z * ne0yz.y);
+    Float de1yz =
+        -Dot(ne1yz, v1yz) + std::max(0.f, dp.y * ne1yz.x) + std::max(0.f, dp.z * ne1yz.y);
+    Float de2yz =
+        -Dot(ne2yz, v2yz) + std::max(0.f, dp.y * ne2yz.x) + std::max(0.f, dp.z * ne2yz.y);
+
+    Vector3f pyz = Vector3f(p.y, p.z, 0.f);
+
+    if ((Dot(ne0yz, pyz) + de0yz) < 0.f || (Dot(ne1yz, pyz) + de1yz) < 0.f ||
+        (Dot(ne2yz, pyz) + de2yz) < 0.f)
+        return false;
+
+    // zx-plane projection overlap
+    Float zxm = (n.y < 0.f ? -1.f : 1.f);
+    Vector3f ne0zx = Vector3f{-edge0.x, edge0.z, 0.f} * zxm;
+    Vector3f ne1zx = Vector3f{-edge1.x, edge1.z, 0.f} * zxm;
+    Vector3f ne2zx = Vector3f{-edge2.x, edge2.z, 0.f} * zxm;
+
+    Vector3f v0zx = Vector3f{p0.z, p0.x, 0.f};
+    Vector3f v1zx = Vector3f{p1.z, p1.x, 0.f};
+    Vector3f v2zx = Vector3f{p2.z, p2.x, 0.f};
+
+    Float de0zx =
+        -Dot(ne0zx, v0zx) + std::max(0.f, dp.y * ne0zx.x) + std::max(0.f, dp.z * ne0zx.y);
+    Float de1zx =
+        -Dot(ne1zx, v1zx) + std::max(0.f, dp.y * ne1zx.x) + std::max(0.f, dp.z * ne1zx.y);
+    Float de2zx =
+        -Dot(ne2zx, v2zx) + std::max(0.f, dp.y * ne2zx.x) + std::max(0.f, dp.z * ne2zx.y);
+
+    Vector3f pzx = Vector3f(p.z, p.x, 0.f);
+
+    if ((Dot(ne0zx, pzx) + de0zx) < 0.f || (Dot(ne1zx, pzx) + de1zx) < 0.f ||
+        (Dot(ne2zx, pzx) + de2zx) < 0.f)
+        return false;
+
+    return true;
+}
+//#pragma optimize("", on)
 
 std::string Triangle::ToString() const {
     // Get triangle vertices in _p0_, _p1_, and _p2_
@@ -551,6 +686,10 @@ pstd::optional<ShapeIntersection> Curve::Intersect(const Ray &ray, Float tMax) c
 
 bool Curve::IntersectP(const Ray &ray, Float tMax) const {
     return IntersectRay(ray, tMax, nullptr);
+}
+
+bool Curve::IntersectB(const Bounds3f &box) const {
+    return false;
 }
 
 bool Curve::IntersectRay(const Ray &r, Float tMax,
@@ -1155,6 +1294,10 @@ bool BilinearPatch::IntersectP(const Ray &ray, Float tMax) const {
     return IntersectBilinearPatch(ray, tMax, p00, p10, p01, p11).has_value();
 }
 
+bool BilinearPatch::IntersectB(const Bounds3f &box) const {
+    return false;
+}
+
 pstd::optional<ShapeSample> BilinearPatch::Sample(Point2f u) const {
     const BilinearPatchMesh *mesh = GetMesh();
     // Get bilinear patch vertices in _p00_, _p01_, _p10_, and _p11_
@@ -1461,7 +1604,7 @@ pstd::vector<Shape> Shape::Create(
             TriangleMesh *mesh = alloc.new_object<TriangleMesh>(
                 *renderFromObject, reverseOrientation, plyMesh.triIndices, plyMesh.p,
                 std::vector<Vector3f>(), plyMesh.n, plyMesh.uv, plyMesh.faceIndices,
-                alloc);
+                alloc, filename);
             shapes = Triangle::CreateTriangles(mesh, alloc);
         }
 

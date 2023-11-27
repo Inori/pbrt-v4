@@ -1,7 +1,7 @@
 from pymxs import runtime as rt # pylint: disable=import-error
 
 MAX_SYSTEM_SCENE_UNIT = 100.0
-VOXEL_UNIT = 2.0
+VOXEL_UNIT = 1.0
 
 def init_globals():
 
@@ -61,13 +61,18 @@ def create_voxel(id, x, y, z, inside):
     
     voxel = rt.Box()
 
-    rt.setVisibility(voxel, 0.5)
+    voxel.name = 'v' + str(id)
+    rt.setVisibility(voxel, 0.8)
 
+    # scale object first
     voxel.length = VOXEL_UNIT * MAX_SYSTEM_SCENE_UNIT
     voxel.width = VOXEL_UNIT * MAX_SYSTEM_SCENE_UNIT
     voxel.height = VOXEL_UNIT * MAX_SYSTEM_SCENE_UNIT
 
-    voxel.name = 'v' + str(id)
+    # then move pivot to cube center, default is on the bottom
+    voxel.pivot = voxel.center
+
+    # finaly, move object to position
     voxel.pos = rt.Point3(x * MAX_SYSTEM_SCENE_UNIT, y * MAX_SYSTEM_SCENE_UNIT, z * MAX_SYSTEM_SCENE_UNIT)
     if inside:
         red = rt.globalVars.get(rt.name('red'))

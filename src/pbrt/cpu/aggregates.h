@@ -40,6 +40,7 @@ class BVHAggregate {
     Bounds3f Bounds() const;
     pstd::optional<ShapeIntersection> Intersect(const Ray &ray, Float tMax) const;
     bool IntersectP(const Ray &ray, Float tMax) const;
+    bool IntersectB(const Bounds3f &box) const;
 
   private:
     // BVHAggregate Private Methods
@@ -86,6 +87,8 @@ class KdTreeAggregate {
     Bounds3f Bounds() const { return bounds; }
 
     bool IntersectP(const Ray &ray, Float tMax) const;
+
+    bool IntersectB(const Bounds3f &box) const;
 
   private:
     // KdTreeAggregate Private Methods

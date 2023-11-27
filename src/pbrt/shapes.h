@@ -234,6 +234,8 @@ class Sphere {
         return BasicIntersect(r, tMax).has_value();
     }
 
+    PBRT_CPU_GPU bool IntersectB(const Bounds3f &box) const;
+
     PBRT_CPU_GPU
     SurfaceInteraction InteractionFromIntersection(const QuadricIntersection &isect,
                                                    Vector3f wo, Float time) const {
@@ -506,6 +508,8 @@ class Disk {
         return BasicIntersect(r, tMax).has_value();
     }
 
+    PBRT_CPU_GPU bool IntersectB(const Bounds3f &box) const;
+
     PBRT_CPU_GPU
     pstd::optional<ShapeSample> Sample(Point2f u) const {
         Point2f pd = SampleUniformDiskConcentric(u);
@@ -693,6 +697,8 @@ class Cylinder {
         return BasicIntersect(r, tMax).has_value();
     }
 
+    PBRT_CPU_GPU bool IntersectB(const Bounds3f &box) const;
+
     PBRT_CPU_GPU
     SurfaceInteraction InteractionFromIntersection(const QuadricIntersection &isect,
                                                    Vector3f wo, Float time) const {
@@ -850,6 +856,8 @@ class Triangle {
                                                 Float tMax = Infinity) const;
     PBRT_CPU_GPU
     bool IntersectP(const Ray &ray, Float tMax = Infinity) const;
+
+    PBRT_CPU_GPU bool IntersectB(const Bounds3f &box) const;
 
     PBRT_CPU_GPU
     Float Area() const {
@@ -1229,8 +1237,13 @@ class Curve {
 
     PBRT_CPU_GPU
     Bounds3f Bounds() const;
+
     pstd::optional<ShapeIntersection> Intersect(const Ray &ray, Float tMax) const;
+
     bool IntersectP(const Ray &ray, Float tMax) const;
+
+    PBRT_CPU_GPU bool IntersectB(const Bounds3f &box) const;
+
     PBRT_CPU_GPU
     Float Area() const;
 
@@ -1373,6 +1386,8 @@ class BilinearPatch {
 
     PBRT_CPU_GPU
     bool IntersectP(const Ray &ray, Float tMax = Infinity) const;
+
+    PBRT_CPU_GPU bool IntersectB(const Bounds3f &box) const;
 
     PBRT_CPU_GPU
     pstd::optional<ShapeSample> Sample(const ShapeSampleContext &ctx, Point2f u) const;
@@ -1553,6 +1568,11 @@ inline pstd::optional<ShapeIntersection> Shape::Intersect(const Ray &ray,
 
 inline bool Shape::IntersectP(const Ray &ray, Float tMax) const {
     auto intr = [&](auto ptr) { return ptr->IntersectP(ray, tMax); };
+    return Dispatch(intr);
+}
+
+inline bool Shape::IntersectB(const Bounds3f &box) const {
+    auto intr = [&](auto ptr) { return ptr->IntersectB(box); };
     return Dispatch(intr);
 }
 
