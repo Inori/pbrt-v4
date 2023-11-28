@@ -82,6 +82,21 @@ def create_voxel(id, x, y, z, inside):
         voxel.wirecolor = green
         voxel.isNodeHidden = True
     return voxel
+
+def create_probe(id, x, y, z):
+    probe = rt.Sphere()
+
+    probe.name = 'p' + str(id)
+    rt.setVisibility(probe, 0.9)
+
+    # scale object first
+    probe.radius = 0.1 * MAX_SYSTEM_SCENE_UNIT
+
+    # finaly, move object to position
+    probe.pos = rt.Point3(x * MAX_SYSTEM_SCENE_UNIT, y * MAX_SYSTEM_SCENE_UNIT, z * MAX_SYSTEM_SCENE_UNIT)
+    green = rt.globalVars.get(rt.name('green'))
+    probe.wirecolor = green
+    return probe
     
 
 def voxelize(src_file):
@@ -105,11 +120,35 @@ def voxelize(src_file):
             if voxel:
                 voxel.Parent = dummy_group
 
+
+def place_probes(src_file):
+    dummy_group = rt.Dummy()
+    dummy_group.name = 'probes'
+    with open(src_file) as src:
+        for line in src.readlines():
+            line = line.rstrip('\n')
+            if not line:
+                continue
+            parts = line.split(' ')
+            if len(parts) != 4:
+                print('error probe format: {}'.format(line))
+                continue
+            id = int(parts[0])
+            x = float(parts[1])
+            y = float(parts[2])
+            z = float(parts[3])
+            probe = create_probe(id, x, y, z)
+            if probe:
+                probe.Parent = dummy_group
+
 def main():
     init_globals()
     # print_controllers()
 
-    voxel_file = 'D:\\Graphics\\Models\\GLTF2\\voxels.txt'
-    voxelize(voxel_file)
+    # voxel_file = 'D:\\Graphics\\Models\\GLTF2\\voxels.txt'
+    # voxelize(voxel_file)
+
+    probe_file = 'D:\\Graphics\\Models\\GLTF2\\probes.txt'
+    place_probes(probe_file)
 
 main()

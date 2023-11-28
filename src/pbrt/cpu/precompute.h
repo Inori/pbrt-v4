@@ -14,6 +14,11 @@ struct Voxel {
     std::string ToString() const;
 };
 
+struct Probe {
+    Point3f pos;
+    int id;
+};
+
 struct RayGeometryHit {
     unsigned int hitCount = 0;
 };
@@ -38,13 +43,20 @@ class PrtProbeIntegrator : public Integrator {
     std::string ToString() const;
 
   private:
-    RayGeometryHit IntersectN(const Ray &ray, Float tMax = Infinity);
 
     pstd::vector<Voxel> VoxelizeScene();
 
+    int CoordinateToIndex(Point3f pMin);
+
     void SurfaceVoxelize(pstd::vector<Voxel> &voxels);
 
+    Point3f OffsetProbeToSurface(Point3f pProbe, Point3f pVoxelMin,
+                                 const pstd::vector<Voxel> &voxels);
+
+    pstd::vector<Probe> FloodFillScene(const pstd::vector<Voxel> &voxels);
+
     void WriteVoxels(const pstd::vector<Voxel> &voxels);
+    void WriteProbes(const pstd::vector<Probe> &probes);
 
   private:
     Sampler samplerPrototype;
