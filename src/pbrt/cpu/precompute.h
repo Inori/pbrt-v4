@@ -17,6 +17,7 @@ struct Voxel {
 struct Probe {
     Point3f pos;
     int id;
+    Float density;
 };
 
 struct RayGeometryHit {
@@ -27,12 +28,13 @@ struct RayGeometryHit {
 class PrtProbeIntegrator : public Integrator {
   public:
     // RandomWalkIntegrator Public Methods
-    PrtProbeIntegrator(int maxDepth, int volUnit, Sampler sampler, Primitive aggregate,
-                       std::vector<Light> lights)
+    PrtProbeIntegrator(int maxDepth, int volUnit, Float rho, Sampler sampler,
+                       Primitive aggregate, std::vector<Light> lights)
         : Integrator(aggregate, lights),
           maxDepth(maxDepth),
           voxelUnit(volUnit),
-          samplerPrototype(sampler) {}
+          samplerPrototype(sampler),
+          rhoProbes(rho) {}
 
     static std::unique_ptr<PrtProbeIntegrator> Create(
         const ParameterDictionary &parameters, Sampler sampler, Primitive aggregate,
@@ -55,6 +57,12 @@ class PrtProbeIntegrator : public Integrator {
 
     pstd::vector<Probe> FloodFillScene(const pstd::vector<Voxel> &voxels);
 
+    int GetTargetProbeCount();
+
+    Float CalcProbeDensity(const Probe &target, const pstd::vector<Probe> &probeList);
+
+    void ReduceProbes(pstd::vector<Probe> &probes);
+
     void WriteVoxels(const pstd::vector<Voxel> &voxels);
     void WriteProbes(const pstd::vector<Probe> &probes);
 
@@ -62,6 +70,7 @@ class PrtProbeIntegrator : public Integrator {
     Sampler samplerPrototype;
     int maxDepth;
     int voxelUnit;
+    const Float rhoProbes;
 };
 
 }  // namespace pbrt

@@ -1,6 +1,7 @@
 #include <pbrt/cpu/precompute.h>
 #include <ext/spherical-harmonics/spherical_harmonics.h>
 #include <pbrt/util/file.h>
+#include <atomic>
 
 namespace pbrt
 {
@@ -16,8 +17,9 @@ std::unique_ptr<PrtProbeIntegrator> PrtProbeIntegrator::Create(
     std::vector<Light> lights, const FileLoc *loc) {
     int maxDepth = parameters.GetOneInt("maxdepth", 5);
     int volUnit = parameters.GetOneInt("volunit", 1);
-    return std::make_unique<PrtProbeIntegrator>(maxDepth, volUnit, sampler, aggregate,
-                                                lights);
+    Float rhoProbes = parameters.GetOneFloat("rhoprobes", 10.0);
+    return std::make_unique<PrtProbeIntegrator>(maxDepth, volUnit, rhoProbes, sampler,
+                                                aggregate, lights);
 }
 
 void PrtProbeIntegrator::Render() {
@@ -31,6 +33,8 @@ void PrtProbeIntegrator::Render() {
     auto voxels = VoxelizeScene();
 
     auto probes = FloodFillScene(voxels);
+
+    ReduceProbes(probes);
 
     WriteVoxels(voxels);
     WriteProbes(probes);
@@ -186,6 +190,66 @@ pstd::vector<pbrt::Probe> PrtProbeIntegrator::FloodFillScene(
     return probes;
 }
 
+
+int PrtProbeIntegrator::GetTargetProbeCount() {
+
+    // To avoid introducing additional parameters,
+    // we set the target probe count to the number of points in a regular grid that
+    // covers the scene with grid spacing set to ¦Ñ_probes
+    Bounds3f bounds = aggregate.Bounds();
+    Vector3f diagonal = bounds.Diagonal();
+
+    int count = std::lround(std::max(diagonal.x / rhoProbes, Float(1.0))) *
+                std::lround(std::max(diagonal.y / rhoProbes, Float(1.0))) *
+                std::lround(std::max(diagonal.z / rhoProbes, Float(1.0)));
+    return count;
+}
+
+Float PrtProbeIntegrator::CalcProbeDensity(const Probe &target,
+                                           const pstd::vector<Probe> &probeList) {
+    auto CalcSingleDensity = [&](const Probe &x, const Probe &p) -> Float {
+        Float t = Distance(x.pos, p.pos) / rhoProbes;
+
+        if (t < 0.0 || t > 1.0) {
+            return 0.0;
+        }
+
+        Float d = 2.0 * std::powf(t, 3.0) - 3 * std::powf(t, 2.0) + 1.0;
+        return d;
+    };
+
+    Float resultDensity = 0.0;
+    for (const auto &p : probeList) {
+        resultDensity += CalcSingleDensity(target, p);
+    }
+
+    return resultDensity;
+}
+
+void PrtProbeIntegrator::ReduceProbes(pstd::vector<Probe> &probes) {
+    int nTargetProbeCount = GetTargetProbeCount();
+
+    while (true) {
+        // Update probe density
+        size_t probeCount = probes.size();
+        ParallelFor(0, probeCount, [&](int i) {
+            Probe &p = probes[i];
+            p.density = CalcProbeDensity(p, probes);
+        });
+
+        // sort probes from density min to max
+        std::sort(probes.begin(), probes.end(), [](const Probe &lhs, const Probe &rhs) {
+            return lhs.density < rhs.density;
+        });
+
+        // remove the largest density probe
+        probes.pop_back();
+
+        if (probes.size() <= nTargetProbeCount) {
+            break;
+        }
+    }
+}
 
 void PrtProbeIntegrator::WriteVoxels(const pstd::vector<Voxel> &voxels) {
     std::stringstream ss;
