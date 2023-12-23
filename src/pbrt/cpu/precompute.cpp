@@ -23,21 +23,17 @@ std::unique_ptr<PrtProbeIntegrator> PrtProbeIntegrator::Create(
 }
 
 void PrtProbeIntegrator::Render() {
-    Point2i pPixel(0, 0);
-    int sampleIndex = 0;
 
-    ScratchBuffer scratchBuffer(65536);
-    Sampler tileSampler = samplerPrototype.Clone(Allocator());
-    tileSampler.StartPixelSample(pPixel, sampleIndex);
+    //auto voxels = VoxelizeScene();
 
-    auto voxels = VoxelizeScene();
+    //auto probes = FloodFillScene(voxels);
 
-    auto probes = FloodFillScene(voxels);
+    //ReduceProbes(probes);
 
-    ReduceProbes(probes);
+    CalcProbeSH(Probe());
 
-    WriteVoxels(voxels);
-    WriteProbes(probes);
+    //WriteVoxels(voxels);
+    //WriteProbes(probes);
 }
 
 std::string PrtProbeIntegrator::ToString() const {
@@ -75,6 +71,26 @@ pstd::vector<pbrt::Voxel> PrtProbeIntegrator::VoxelizeScene() {
     SurfaceVoxelize(voxels);
 
     return voxels;
+}
+
+void PrtProbeIntegrator::CalcProbeSH(Probe &probe) {
+    Point2i pPixel(0, 0);
+    int sampleIndex = 0;
+
+    ScratchBuffer scratchBuffer(65536);
+    Sampler sampler = samplerPrototype.Clone(Allocator());
+    
+    int sampleCount = sampler.SamplesPerPixel();
+
+
+    for (int sampleIndex = 0; sampleIndex != sampleCount; ++sampleIndex) {
+        sampler.StartPixelSample(pPixel, sampleIndex);
+        Point2f u = sampler.Get2D();
+        Vector3f wp = SampleUniformSphere(u);
+
+    }
+
+    // WriteSampleDirections(dirs);
 }
 
 int PrtProbeIntegrator::CoordinateToIndex(Point3f pMin) {
@@ -291,6 +307,20 @@ void PrtProbeIntegrator::WriteProbes(const pstd::vector<Probe> &probes) {
     }
 
     WriteFileContents("probes.txt", ss.str());
+}
+
+void PrtProbeIntegrator::WriteSampleDirections(const pstd::vector<Vector3f> &dirs) {
+    if (dirs.empty()) {
+        LOG_VERBOSE("no dirs generated.");
+        return;
+    }
+
+    std::stringstream ss;
+    for (const Vector3f &dir : dirs) {
+        ss << dir.x << " " << dir.y << " " << dir.z << std::endl;
+    }
+
+    WriteFileContents("sample_dirs.txt", ss.str());
 }
 
 #pragma optimize("", on)

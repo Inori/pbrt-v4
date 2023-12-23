@@ -6,6 +6,11 @@
 namespace pbrt
 {
 
+// Order starts at 0, 0 order has 1 coefficient
+constexpr int ShOrder = 2;
+// SH coefficient count
+constexpr int ShCoefficientCount = (ShOrder + 1) * (ShOrder + 1);
+
 struct Voxel {
     Bounds3f box;
     bool overlap;
@@ -18,6 +23,7 @@ struct Probe {
     Point3f pos;
     int id;
     Float density;
+    pstd::array<pstd::array<Float, ShCoefficientCount>, 3> coeffs;
 };
 
 struct RayGeometryHit {
@@ -48,6 +54,8 @@ class PrtProbeIntegrator : public Integrator {
 
     pstd::vector<Voxel> VoxelizeScene();
 
+    void CalcProbeSH(Probe &probe);
+
     int CoordinateToIndex(Point3f pMin);
 
     void SurfaceVoxelize(pstd::vector<Voxel> &voxels);
@@ -65,6 +73,7 @@ class PrtProbeIntegrator : public Integrator {
 
     void WriteVoxels(const pstd::vector<Voxel> &voxels);
     void WriteProbes(const pstd::vector<Probe> &probes);
+    void WriteSampleDirections(const pstd::vector<Vector3f> &dirs);
 
   private:
     Sampler samplerPrototype;

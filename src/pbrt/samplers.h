@@ -29,6 +29,79 @@
 
 namespace pbrt {
 
+// SimpleHaltonSampler Definition
+class SimpleHaltonSampler {
+  public:
+    // SimpleHaltonSampler Public Methods
+    SimpleHaltonSampler(int samplesPerPixel,
+                        RandomizeStrategy randomize = RandomizeStrategy::PermuteDigits,
+                        int seed = 0, Allocator alloc = {});
+
+    PBRT_CPU_GPU
+    static constexpr const char *Name() { return "SimpleHaltonSampler"; }
+    static SimpleHaltonSampler *Create(const ParameterDictionary &parameters,
+                                       const FileLoc *loc, Allocator alloc);
+
+    PBRT_CPU_GPU
+    int SamplesPerPixel() const { return samplesPerPixel; }
+
+    PBRT_CPU_GPU
+    RandomizeStrategy GetRandomizeStrategy() const { return randomize; }
+
+    PBRT_CPU_GPU
+    void StartPixelSample(Point2i p, int sampleIndex, int dim) {
+        haltonIndex = 0;
+        haltonIndex += sampleIndex;
+        dimension = std::max(2, dim);
+    }
+
+    PBRT_CPU_GPU
+    Float Get1D() {
+        if (dimension >= PrimeTableSize)
+            dimension = 2;
+        return SampleDimension(dimension++);
+    }
+
+    PBRT_CPU_GPU
+    Point2f Get2D() {
+        if (dimension + 1 >= PrimeTableSize)
+            dimension = 2;
+        int dim = dimension;
+        dimension += 2;
+        return {SampleDimension(dim), SampleDimension(dim + 1)};
+    }
+
+    PBRT_CPU_GPU
+    Point2f GetPixel2D() { return Get2D(); }
+
+    Sampler Clone(Allocator alloc);
+    std::string ToString() const;
+
+  private:
+    // HaltonSampler Private Methods
+
+    PBRT_CPU_GPU
+    Float SampleDimension(int dimension) const {
+        if (randomize == RandomizeStrategy::None)
+            return RadicalInverse(dimension, haltonIndex);
+        else if (randomize == RandomizeStrategy::PermuteDigits)
+            return ScrambledRadicalInverse(dimension, haltonIndex,
+                                           (*digitPermutations)[dimension]);
+        else {
+            DCHECK_EQ(randomize, RandomizeStrategy::Owen);
+            return OwenScrambledRadicalInverse(dimension, haltonIndex,
+                                               MixBits(1 + (dimension << 4)));
+        }
+    }
+
+    // HaltonSampler Private Members
+    int samplesPerPixel;
+    RandomizeStrategy randomize;
+    pstd::vector<DigitPermutation> *digitPermutations = nullptr;
+    int64_t haltonIndex = 0;
+    int dimension = 0;
+};
+
 // HaltonSampler Definition
 class HaltonSampler {
   public:

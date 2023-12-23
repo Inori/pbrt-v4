@@ -97,6 +97,21 @@ def create_probe(id, x, y, z):
     green = rt.globalVars.get(rt.name('green'))
     probe.wirecolor = green
     return probe
+
+def create_sphere(name, color, radius, x, y, z):
+    sphere = rt.Sphere()
+
+    sphere.name = name
+    #rt.setVisibility(sphere, 0.9)
+
+    # scale object first
+    sphere.radius = radius * MAX_SYSTEM_SCENE_UNIT
+
+    # finaly, move object to position
+    sphere.pos = rt.Point3(x * MAX_SYSTEM_SCENE_UNIT, y * MAX_SYSTEM_SCENE_UNIT, z * MAX_SYSTEM_SCENE_UNIT)
+    c = rt.globalVars.get(rt.name(color))
+    sphere.wirecolor = c
+    return sphere
     
 
 def voxelize(src_file):
@@ -141,6 +156,25 @@ def place_probes(src_file):
             if probe:
                 probe.Parent = dummy_group
 
+def show_dirs(dir_file):
+    create_sphere('unit', 'gray' ,1 , 0, 0, 0)
+    with open(dir_file) as src:
+        index = 0
+        for line in src.readlines():
+            line = line.rstrip('\n')
+            if not line:
+                continue
+            parts = line.split(' ')
+            if len(parts) != 3:
+                print('error dir format: {}'.format(line))
+                continue
+            x = float(parts[0])
+            y = float(parts[1])
+            z = float(parts[2])
+            name = 's_{}'.format(index)
+            index += 1
+            create_sphere(name, 'green', 0.01, x, y, z)
+
 def main():
     init_globals()
     # print_controllers()
@@ -148,7 +182,10 @@ def main():
     # voxel_file = 'D:\\Graphics\\Models\\GLTF2\\voxels.txt'
     # voxelize(voxel_file)
 
-    probe_file = 'D:\\Graphics\\Models\\GLTF2\\probes.txt'
-    place_probes(probe_file)
+    # probe_file = 'D:\\Graphics\\Models\\GLTF2\\probes.txt'
+    # place_probes(probe_file)
+
+    dir_file = 'D:\\Graphics\\Models\\GLTF2\\sample_dirs.txt'
+    show_dirs(dir_file)
 
 main()

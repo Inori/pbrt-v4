@@ -28,6 +28,46 @@ std::string Sampler::ToString() const {
     return DispatchCPU(ts);
 }
 
+SimpleHaltonSampler::SimpleHaltonSampler(int samplesPerPixel, RandomizeStrategy randomize,
+                                         int seed, Allocator alloc)
+    : samplesPerPixel(samplesPerPixel), randomize(randomize) {
+    if (randomize == RandomizeStrategy::PermuteDigits)
+        digitPermutations = ComputeRadicalInversePermutations(seed, alloc);
+}
+
+
+SimpleHaltonSampler *SimpleHaltonSampler::Create(const ParameterDictionary &parameters,
+                                                 const FileLoc *loc, Allocator alloc) {
+
+    RandomizeStrategy randomizer;
+    std::string s = parameters.GetOneString("randomization", "permutedigits");
+    if (s == "none")
+        randomizer = RandomizeStrategy::None;
+    else if (s == "permutedigits")
+        randomizer = RandomizeStrategy::PermuteDigits;
+    else if (s == "fastowen")
+        ErrorExit("\"fastowen\" randomization not supported by Halton sampler.");
+    else if (s == "owen")
+        randomizer = RandomizeStrategy::Owen;
+    else
+        ErrorExit(loc, "%s: unknown randomization strategy given to HaltonSampler", s);
+
+    int nsamp = parameters.GetOneInt("pixelsamples", 128);
+    int seed = parameters.GetOneInt("seed", Options->seed);
+    return alloc.new_object<SimpleHaltonSampler>(nsamp, randomizer, seed, alloc);
+}
+
+pbrt::Sampler SimpleHaltonSampler::Clone(Allocator alloc) {
+    return alloc.new_object<SimpleHaltonSampler>(*this);
+}
+
+std::string SimpleHaltonSampler::ToString() const {
+    return StringPrintf("[ SimpleHaltonSampler randomize: %s digitPermutations: %p "
+                        "haltonIndex: %d dimension: %d samplesPerPixel: %d",
+                        randomize, digitPermutations, haltonIndex, dimension,
+                        samplesPerPixel);
+}
+
 // HaltonSampler Method Definitions
 HaltonSampler::HaltonSampler(int samplesPerPixel, Point2i fullRes,
                              RandomizeStrategy randomize, int seed, Allocator alloc)
@@ -423,6 +463,8 @@ Sampler Sampler::Create(const std::string &name, const ParameterDictionary &para
         sampler = PaddedSobolSampler::Create(parameters, loc, alloc);
     else if (name == "halton")
         sampler = HaltonSampler::Create(parameters, fullRes, loc, alloc);
+    else if (name == "simplehalton")
+        sampler = SimpleHaltonSampler::Create(parameters, loc, alloc);
     else if (name == "sobol")
         sampler = SobolSampler::Create(parameters, fullRes, loc, alloc);
     else if (name == "pmj02bn")
@@ -439,5 +481,7 @@ Sampler Sampler::Create(const std::string &name, const ParameterDictionary &para
 
     return sampler;
 }
+
+
 
 }  // namespace pbrt

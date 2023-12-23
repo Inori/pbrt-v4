@@ -25,6 +25,7 @@ struct CameraSample {
 };
 
 // Sampler Declarations
+class SimpleHaltonSampler;
 class HaltonSampler;
 class PaddedSobolSampler;
 class PMJ02BNSampler;
@@ -36,12 +37,12 @@ class MLTSampler;
 class DebugMLTSampler;
 
 // Sampler Definition
-class Sampler
-    : public TaggedPointer<  // Sampler Types
-          PMJ02BNSampler, IndependentSampler, StratifiedSampler, HaltonSampler,
-          PaddedSobolSampler, SobolSampler, ZSobolSampler, MLTSampler, DebugMLTSampler
+class Sampler : public TaggedPointer<  // Sampler Types
+                    PMJ02BNSampler, IndependentSampler, StratifiedSampler, HaltonSampler,
+                    PaddedSobolSampler, SobolSampler, ZSobolSampler, MLTSampler,
+                    DebugMLTSampler, SimpleHaltonSampler
 
-          > {
+                    > {
   public:
     // Sampler Interface
     using TaggedPointer::TaggedPointer;
